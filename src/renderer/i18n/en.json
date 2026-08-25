@@ -13,7 +13,8 @@
   "nav": {
     "checkout": "Checkout",
     "products": "Products",
-    "metalRates": "Metal Rates"
+    "metalRates": "Metal Rates",
+    "purchases": "Purchases"
   },
   "products": {
     "title": "Products",
@@ -52,7 +53,10 @@
     "categoryAppliesTo": "Applies To",
     "appliesTo_both": "Jewelry & Gift",
     "appliesTo_jewelry": "Jewelry Only",
-    "appliesTo_gift": "Gift Only"
+    "appliesTo_gift": "Gift Only",
+    "supplier": "Supplier",
+    "noSupplier": "—",
+    "lowStock": "Low Stock"
   },
   "metalRates": {
     "title": "Daily Metal Rates",
@@ -84,5 +88,57 @@
     "managerPassword": "Manager Password",
     "approve": "Approve",
     "receipt": "Receipt"
+  },
+  "purchases": {
+    "title": "Purchases",
+    "tabRecord": "Record Purchase",
+    "tabHistory": "History",
+    "tabSuppliers": "Suppliers",
+    "tabMovements": "Stock Movements",
+    "supplier": "Supplier",
+    "selectSupplier": "Select a supplier…",
+    "invoiceRef": "Invoice Ref (optional)",
+    "searchProduct": "Search product to add…",
+    "qty": "Qty",
+    "unitCost": "Unit Cost",
+    "subtotal": "Subtotal",
+    "total": "Total",
+    "recordPurchase": "Record Purchase",
+    "empty": "No items added",
+    "purchaseRecorded": "Purchase recorded",
+    "date": "Date",
+    "items": "items",
+    "return": "Return",
+    "returnItems": "Return Items",
+    "reason": "Reason",
+    "submitReturn": "Submit Return",
+    "noPurchases": "No purchases yet",
+    "movementType": "Type",
+    "movementQty": "Qty Change",
+    "movementReference": "Reference",
+    "filterByProduct": "Filter by product",
+    "allProducts": "All Products",
+    "typePurchase": "Purchase",
+    "typePurchaseReturn": "Purchase Return",
+    "typeSale": "Sale"
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "newSupplier": "New Supplier",
+    "editSupplier": "Edit Supplier",
+    "ledger": "Ledger",
+    "totalPurchased": "Total Purchased",
+    "totalReturned": "Total Returned",
+    "totalPaid": "Total Paid",
+    "balanceOwed": "Balance Owed",
+    "recordPayment": "Record Payment",
+    "amount": "Amount",
+    "method": "Method (optional)",
+    "note": "Note (optional)",
+    "paymentHistory": "Payment History",
+    "noPayments": "No payments recorded"
   }
 }

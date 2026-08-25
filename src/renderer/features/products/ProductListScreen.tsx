@@ -7,6 +7,7 @@ import { formatAed } from '../../lib/format'
 import { ProductFormModal } from './ProductFormModal'
 import { BarcodeLabelPreview } from './BarcodeLabelPreview'
 import type { Category, Product } from '@shared/types/product'
+import type { Supplier } from '@shared/types/supplier'
 
 export function ProductListScreen() {
   const { t } = useTranslation()
@@ -14,17 +15,20 @@ export function ProductListScreen() {
   const canEdit = !!user && can(user.role, 'products.write')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
   const [labelFor, setLabelFor] = useState<Product | null>(null)
 
   const load = useCallback(async () => {
-    const [productList, categoryList] = await Promise.all([
+    const [productList, categoryList, supplierList] = await Promise.all([
       window.api.products.list({ activeOnly: true }),
-      window.api.categories.list()
+      window.api.categories.list(),
+      canEdit ? window.api.suppliers.list() : Promise.resolve<Supplier[]>([])
     ])
     setProducts(productList)
     setCategories(categoryList)
-  }, [])
+    setSuppliers(supplierList)
+  }, [canEdit])
 
   useEffect(() => {
     void load()
@@ -68,7 +72,14 @@ export function ProductListScreen() {
                 <td className="px-4 py-2 font-mono text-xs text-slate-500">{p.barcode}</td>
                 <td className="px-4 py-2 capitalize">{p.type}</td>
                 <td className="px-4 py-2">{formatAed(p.sellingPrice)}</td>
-                <td className="px-4 py-2">{p.stockQty}</td>
+                <td className="px-4 py-2">
+                  <span>{p.stockQty}</span>
+                  {p.stockQty <= p.lowStockThreshold && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                      {t('products.lowStock')}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2 text-right">
                   <div className="flex justify-end gap-3">
                     {canEdit && (
@@ -105,6 +116,7 @@ export function ProductListScreen() {
       {editing && (
         <ProductFormModal
           categories={categories}
+          suppliers={suppliers}
           existing={editing === 'new' ? undefined : editing}
           onClose={() => setEditing(null)}
           onSaved={() => {

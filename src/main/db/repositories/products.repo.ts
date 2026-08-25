@@ -195,3 +195,16 @@ export function decrementStock(productId: number, qty: number): void {
     .prepare(`UPDATE products SET stock_qty = stock_qty - ?, updated_at = datetime('now') WHERE id = ?`)
     .run(qty, productId)
 }
+
+export function incrementStock(productId: number, qty: number): void {
+  getDb()
+    .prepare(`UPDATE products SET stock_qty = stock_qty + ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(qty, productId)
+}
+
+/** Last-cost model: a purchase line's unit cost becomes the product's current cost price. */
+export function updateCostPrice(productId: number, costPrice: number): void {
+  getDb()
+    .prepare(`UPDATE products SET cost_price = ?, updated_at = datetime('now') WHERE id = ?`)
+    .run(costPrice, productId)
+}

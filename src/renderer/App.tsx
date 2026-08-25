@@ -5,6 +5,7 @@ import { AppShell, type Screen } from './app/AppShell'
 import { CheckoutScreen } from './features/checkout/CheckoutScreen'
 import { ProductListScreen } from './features/products/ProductListScreen'
 import { MetalRateScreen } from './features/metal-rates/MetalRateScreen'
+import { PurchasesScreen } from './features/purchases/PurchasesScreen'
 
 export default function App() {
   const { user, status, refresh } = useAuthStore()
@@ -22,6 +23,7 @@ export default function App() {
       {screen === 'checkout' && <CheckoutScreen />}
       {screen === 'products' && <ProductListScreen />}
       {screen === 'metalRates' && <MetalRateScreen />}
+      {screen === 'purchases' && <PurchasesScreen />}
     </AppShell>
   )
 }

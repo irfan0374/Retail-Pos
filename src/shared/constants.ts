@@ -10,6 +10,8 @@ export type Permission =
   | 'products.read'
   | 'products.write'
   | 'metalRates.write'
+  | 'purchases.read'
+  | 'purchases.write'
   | 'sales.create'
   | 'sales.overridePrice'
   | 'sales.void'
@@ -21,6 +23,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'products.read',
     'products.write',
     'metalRates.write',
+    'purchases.read',
+    'purchases.write',
     'sales.create',
     'sales.overridePrice',
     'sales.void',
@@ -31,6 +35,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'products.read',
     'products.write',
     'metalRates.write',
+    'purchases.read',
+    'purchases.write',
     'sales.create',
     'sales.overridePrice',
     'sales.void',

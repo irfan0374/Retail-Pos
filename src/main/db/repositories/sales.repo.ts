@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3'
 import { getDb } from '../index'
 import { decrementStock } from './products.repo'
 import { recordAuditLog } from './auditLog.repo'
+import { recordStockMovement } from './stockMovements.repo'
 import type { PaymentMethod, Sale, SaleItem, SaleWithItems } from '@shared/types/sale'
 
 interface SaleRow {
@@ -137,7 +138,19 @@ export function finalizeSale(params: FinalizeSaleParams): SaleWithItems {
         item.lineTotal,
         item.isExchangeItem ? 1 : 0
       )
-      if (!item.isExchangeItem) decrementStock(item.productId, item.qty)
+      if (!item.isExchangeItem) {
+        decrementStock(item.productId, item.qty)
+        recordStockMovement(
+          {
+            productId: item.productId,
+            qtyDelta: -item.qty,
+            movementType: 'sale',
+            referenceTable: 'sales',
+            referenceId: saleId
+          },
+          db
+        )
+      }
     }
 
     db.prepare('INSERT INTO payments (sale_id, method, amount) VALUES (?, ?, ?)').run(

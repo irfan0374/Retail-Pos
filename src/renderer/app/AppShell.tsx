@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { can, IDLE_LOGOUT_MS } from '@shared/constants'
 import { useAuthStore } from '../store/authStore'
 
-export type Screen = 'checkout' | 'products' | 'metalRates'
+export type Screen = 'checkout' | 'products' | 'metalRates' | 'purchases'
 
 interface Props {
   screen: Screen
@@ -37,6 +37,9 @@ export function AppShell({ screen, onNavigate, children }: Props) {
     { screen: 'products', label: t('nav.products') },
     ...(user && can(user.role, 'metalRates.write')
       ? [{ screen: 'metalRates' as const, label: t('nav.metalRates') }]
+      : []),
+    ...(user && can(user.role, 'purchases.read')
+      ? [{ screen: 'purchases' as const, label: t('nav.purchases') }]
       : [])
   ]
 

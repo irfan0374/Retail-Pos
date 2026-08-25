@@ -2,7 +2,9 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../../components/Modal'
 import { CategoryFormModal } from './CategoryFormModal'
+import { SupplierFormModal } from '../purchases/SupplierFormModal'
 import type { Category, MakingChargeType, MetalType, NewProductInput, Product } from '@shared/types/product'
+import type { Supplier } from '@shared/types/supplier'
 
 const METAL_TYPES: MetalType[] = ['gold', 'silver', 'platinum', 'imitation']
 const MAKING_CHARGE_TYPES: MakingChargeType[] = ['fixed', 'percent']
@@ -33,11 +35,13 @@ function toInput(p?: Product): NewProductInput {
 
 export function ProductFormModal({
   categories: initialCategories,
+  suppliers: initialSuppliers,
   existing,
   onClose,
   onSaved
 }: {
   categories: Category[]
+  suppliers: Supplier[]
   existing?: Product
   onClose: () => void
   onSaved: () => void
@@ -46,6 +50,8 @@ export function ProductFormModal({
   const [form, setForm] = useState<NewProductInput>(toInput(existing))
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [categoryModal, setCategoryModal] = useState<'create' | 'edit' | null>(null)
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers)
+  const [creatingSupplier, setCreatingSupplier] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -276,6 +282,31 @@ export function ProductFormModal({
           </Field>
         </div>
 
+        <Field label={t('products.supplier')}>
+          <div className="flex gap-2">
+            <select
+              className="input"
+              value={form.supplierId ?? ''}
+              onChange={(e) => set('supplierId', e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">{t('products.noSupplier')}</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setCreatingSupplier(true)}
+              className="btn-secondary shrink-0 px-3"
+              title={t('suppliers.newSupplier')}
+            >
+              +
+            </button>
+          </div>
+        </Field>
+
         <div className="grid grid-cols-2 gap-3">
           <Field label={t('products.stockQty')}>
             <input
@@ -323,6 +354,17 @@ export function ProductFormModal({
             )
             set('categoryId', category.id)
             setCategoryModal(null)
+          }}
+        />
+      )}
+
+      {creatingSupplier && (
+        <SupplierFormModal
+          onClose={() => setCreatingSupplier(false)}
+          onSaved={(supplier) => {
+            setSuppliers((prev) => [...prev, supplier].sort((a, b) => a.name.localeCompare(b.name)))
+            set('supplierId', supplier.id)
+            setCreatingSupplier(false)
           }}
         />
       )}

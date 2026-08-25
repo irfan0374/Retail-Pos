@@ -32,6 +32,23 @@ const api: IpcApi = {
   },
   sales: {
     finalize: (input) => ipcRenderer.invoke(IPC.SALES_FINALIZE, input)
+  },
+  suppliers: {
+    list: () => ipcRenderer.invoke(IPC.SUPPLIERS_LIST),
+    search: (query) => ipcRenderer.invoke(IPC.SUPPLIERS_SEARCH, query),
+    create: (input) => ipcRenderer.invoke(IPC.SUPPLIERS_CREATE, input),
+    update: (input) => ipcRenderer.invoke(IPC.SUPPLIERS_UPDATE, input),
+    getLedger: (supplierId) => ipcRenderer.invoke(IPC.SUPPLIERS_GET_LEDGER, supplierId),
+    listPayments: (supplierId) => ipcRenderer.invoke(IPC.SUPPLIER_PAYMENTS_LIST, supplierId),
+    createPayment: (input) => ipcRenderer.invoke(IPC.SUPPLIER_PAYMENTS_CREATE, input)
+  },
+  purchases: {
+    list: (filter) => ipcRenderer.invoke(IPC.PURCHASES_LIST, filter),
+    get: (id) => ipcRenderer.invoke(IPC.PURCHASES_GET, id),
+    create: (input) => ipcRenderer.invoke(IPC.PURCHASES_CREATE, input),
+    listReturns: (filter) => ipcRenderer.invoke(IPC.PURCHASE_RETURNS_LIST, filter),
+    createReturn: (input) => ipcRenderer.invoke(IPC.PURCHASE_RETURNS_CREATE, input),
+    listStockMovements: (filter) => ipcRenderer.invoke(IPC.STOCK_MOVEMENTS_LIST, filter)
   }
 }
 

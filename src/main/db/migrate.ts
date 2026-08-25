@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3'
 import m001Init from './migrations/001_init.sql?raw'
+import m002Purchases from './migrations/002_purchases.sql?raw'
 
 interface Migration {
   name: string
@@ -7,7 +8,10 @@ interface Migration {
 }
 
 /** Ordered list of migrations. Add new entries here (never edit an already-applied one). */
-const MIGRATIONS: Migration[] = [{ name: '001_init', sql: m001Init }]
+const MIGRATIONS: Migration[] = [
+  { name: '001_init', sql: m001Init },
+  { name: '002_purchases', sql: m002Purchases }
+]
 
 export function runMigrations(db: Database.Database): void {
   db.exec(`

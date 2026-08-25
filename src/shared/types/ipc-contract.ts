@@ -2,6 +2,23 @@ import type { SafeUser } from './user'
 import type { Category, MetalRate, NewProductInput, Product, UpdateProductInput } from './product'
 import type { Customer, NewCustomerInput } from './customer'
 import type { FinalizeSaleInput, SaleWithItems } from './sale'
+import type {
+  NewSupplierInput,
+  NewSupplierPaymentInput,
+  Supplier,
+  SupplierLedger,
+  SupplierPayment,
+  UpdateSupplierInput
+} from './supplier'
+import type {
+  NewPurchaseInput,
+  NewPurchaseReturnInput,
+  Purchase,
+  PurchaseReturn,
+  PurchaseReturnWithItems,
+  PurchaseWithItems,
+  StockMovement
+} from './purchase'
 
 export const IPC = {
   AUTH_LOGIN: 'auth:login',
@@ -26,7 +43,23 @@ export const IPC = {
   CUSTOMERS_SEARCH: 'customers:search',
   CUSTOMERS_CREATE: 'customers:create',
 
-  SALES_FINALIZE: 'sales:finalize'
+  SALES_FINALIZE: 'sales:finalize',
+
+  SUPPLIERS_LIST: 'suppliers:list',
+  SUPPLIERS_SEARCH: 'suppliers:search',
+  SUPPLIERS_CREATE: 'suppliers:create',
+  SUPPLIERS_UPDATE: 'suppliers:update',
+  SUPPLIERS_GET_LEDGER: 'suppliers:getLedger',
+  SUPPLIER_PAYMENTS_LIST: 'supplierPayments:list',
+  SUPPLIER_PAYMENTS_CREATE: 'supplierPayments:create',
+
+  PURCHASES_LIST: 'purchases:list',
+  PURCHASES_GET: 'purchases:get',
+  PURCHASES_CREATE: 'purchases:create',
+  PURCHASE_RETURNS_LIST: 'purchaseReturns:list',
+  PURCHASE_RETURNS_CREATE: 'purchaseReturns:create',
+
+  STOCK_MOVEMENTS_LIST: 'stockMovements:list'
 } as const
 
 export interface LoginRequest {
@@ -83,5 +116,22 @@ export interface IpcApi {
   }
   sales: {
     finalize(input: FinalizeSaleInput): Promise<SaleWithItems>
+  }
+  suppliers: {
+    list(): Promise<Supplier[]>
+    search(query: string): Promise<Supplier[]>
+    create(input: NewSupplierInput): Promise<Supplier>
+    update(input: UpdateSupplierInput): Promise<Supplier>
+    getLedger(supplierId: number): Promise<SupplierLedger>
+    listPayments(supplierId: number): Promise<SupplierPayment[]>
+    createPayment(input: NewSupplierPaymentInput): Promise<SupplierPayment>
+  }
+  purchases: {
+    list(filter?: { supplierId?: number }): Promise<Purchase[]>
+    get(id: number): Promise<PurchaseWithItems | null>
+    create(input: NewPurchaseInput): Promise<PurchaseWithItems>
+    listReturns(filter?: { purchaseId?: number }): Promise<PurchaseReturn[]>
+    createReturn(input: NewPurchaseReturnInput): Promise<PurchaseReturnWithItems>
+    listStockMovements(filter?: { productId?: number }): Promise<StockMovement[]>
   }
 }
