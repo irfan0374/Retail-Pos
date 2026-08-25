@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Pencil, Plus, Printer, Trash2 } from 'lucide-react'
 import { RoleGate } from '../../app/RoleGate'
 import { useAuthStore } from '../../store/authStore'
 import { can } from '@shared/constants'
@@ -45,7 +46,8 @@ export function ProductListScreen() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('products.title')}</h1>
         <RoleGate permission="products.write">
-          <button onClick={() => setEditing('new')} className="btn-primary">
+          <button onClick={() => setEditing('new')} className="btn-primary flex items-center gap-1.5">
+            <Plus className="h-4 w-4" />
             {t('products.newProduct')}
           </button>
         </RoleGate>
@@ -83,18 +85,27 @@ export function ProductListScreen() {
                 <td className="px-4 py-2 text-right">
                   <div className="flex justify-end gap-3">
                     {canEdit && (
-                      <button onClick={() => setEditing(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                      <button
+                        onClick={() => setEditing(p)}
+                        className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
                         {t('products.edit')}
                       </button>
                     )}
-                    <button onClick={() => setLabelFor(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                    <button
+                      onClick={() => setLabelFor(p)}
+                      className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
                       {t('products.printLabel')}
                     </button>
                     {canEdit && (
                       <button
                         onClick={() => void handleDelete(p)}
-                        className="text-sm text-red-500 hover:text-red-700"
+                        className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700"
                       >
+                        <Trash2 className="h-3.5 w-3.5" />
                         {t('products.delete')}
                       </button>
                     )}

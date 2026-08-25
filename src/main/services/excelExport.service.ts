@@ -4,6 +4,8 @@ import type { ExportResult } from '@shared/types/report'
 import type { ShopSettings } from '@shared/types/settings'
 import type { VatSummary } from '@shared/types/report'
 
+const CURRENCY_FMT = '#,##0.00'
+
 async function promptAndSave(workbook: ExcelJS.Workbook, suggestedName: string): Promise<ExportResult> {
   const options: SaveDialogOptions = {
     title: 'Export to Excel',
@@ -39,10 +41,10 @@ export async function exportSalesRegister(rows: SalesRegisterRow[]): Promise<Exp
     { header: 'Date', key: 'date', width: 20 },
     { header: 'Item', key: 'item', width: 30 },
     { header: 'Qty', key: 'qty', width: 8 },
-    { header: 'Unit Price (AED)', key: 'unitPrice', width: 14 },
-    { header: 'Discount (AED)', key: 'discount', width: 12 },
-    { header: 'VAT (AED)', key: 'vat', width: 12 },
-    { header: 'Line Total (AED)', key: 'lineTotal', width: 14 },
+    { header: 'Unit Price (AED)', key: 'unitPrice', width: 14, style: { numFmt: CURRENCY_FMT } },
+    { header: 'Discount (AED)', key: 'discount', width: 12, style: { numFmt: CURRENCY_FMT } },
+    { header: 'VAT (AED)', key: 'vat', width: 12, style: { numFmt: CURRENCY_FMT } },
+    { header: 'Line Total (AED)', key: 'lineTotal', width: 14, style: { numFmt: CURRENCY_FMT } },
     { header: 'Payment Method', key: 'paymentMethod', width: 16 }
   ]
   sheet.getRow(1).font = { bold: true }
@@ -71,29 +73,36 @@ export async function exportPurchaseRegister(rows: PurchaseRegisterRow[]): Promi
     { header: 'Supplier', key: 'supplierName', width: 22 },
     { header: 'Product', key: 'productName', width: 28 },
     { header: 'Qty', key: 'qty', width: 8 },
-    { header: 'Unit Cost (AED)', key: 'unitCost', width: 14 },
-    { header: 'Line Total (AED)', key: 'lineTotal', width: 14 }
+    { header: 'Unit Cost (AED)', key: 'unitCost', width: 14, style: { numFmt: CURRENCY_FMT } },
+    { header: 'Line Total (AED)', key: 'lineTotal', width: 14, style: { numFmt: CURRENCY_FMT } }
   ]
   sheet.getRow(1).font = { bold: true }
   for (const row of rows) sheet.addRow(row)
   return promptAndSave(workbook, `purchase-register-${Date.now()}.xlsx`)
 }
 
+/** Laid out to match the shape of an FTA VAT return summary (standard-rated supplies box). */
 export async function exportVatReport(summary: VatSummary, settings: ShopSettings): Promise<ExportResult> {
   const workbook = new ExcelJS.Workbook()
   const sheet = workbook.addWorksheet('VAT Report')
   sheet.columns = [
-    { key: 'label', width: 24 },
-    { key: 'value', width: 24 }
+    { key: 'label', width: 28 },
+    { key: 'value', width: 26 }
   ]
   sheet.addRow(['Shop Name', settings.shopName])
   sheet.addRow(['TRN', settings.trn])
-  sheet.addRow(['Period', `${summary.dateFrom} to ${summary.dateTo}`])
+  sheet.addRow(['Address', settings.address])
+  sheet.addRow(['Phone', settings.phone])
+  sheet.addRow(['VAT Return Period', `${summary.dateFrom} to ${summary.dateTo}`])
   sheet.addRow([])
-  sheet.addRow(['Sales Count', summary.salesCount])
-  sheet.addRow(['Taxable Amount (AED)', summary.taxableAmount])
-  sheet.addRow(['VAT Amount (AED)', summary.vatAmount])
-  sheet.addRow(['Total Amount (AED)', summary.totalAmount])
+  sheet.addRow(['Number of Sales', summary.salesCount])
+  const taxableRow = sheet.addRow(['Standard Rated Supplies — Taxable Amount (AED)', summary.taxableAmount])
+  const vatRow = sheet.addRow(['Output VAT Due (5%) (AED)', summary.vatAmount])
+  const totalRow = sheet.addRow(['Total Amount Including VAT (AED)', summary.totalAmount])
+  taxableRow.getCell('value').numFmt = CURRENCY_FMT
+  vatRow.getCell('value').numFmt = CURRENCY_FMT
+  totalRow.getCell('value').numFmt = CURRENCY_FMT
+  totalRow.font = { bold: true }
   sheet.getColumn('label').font = { bold: true }
-  return promptAndSave(workbook, `vat-report-${Date.now()}.xlsx`)
+  return promptAndSave(workbook, `vat-filing-${summary.dateFrom}-to-${summary.dateTo}.xlsx`)
 }

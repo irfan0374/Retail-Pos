@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '../../components/Modal'
 import { CategoryFormModal } from './CategoryFormModal'
 import { SupplierFormModal } from '../purchases/SupplierFormModal'
-import type { Category, MakingChargeType, MetalType, NewProductInput, Product } from '@shared/types/product'
+import type { Category, MetalType, NewProductInput, Product } from '@shared/types/product'
 import type { Supplier } from '@shared/types/supplier'
 
 const METAL_TYPES: MetalType[] = ['gold', 'silver', 'platinum', 'imitation']
-const MAKING_CHARGE_TYPES: MakingChargeType[] = ['fixed', 'percent']
 
 function toInput(p?: Product): NewProductInput {
   return {
@@ -167,89 +166,6 @@ export function ProductFormModal({
                 />
               </Field>
             </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <Field label={t('products.grossWeight')}>
-                <input
-                  type="number"
-                  step="0.001"
-                  className="input"
-                  value={form.grossWeight ?? ''}
-                  onChange={(e) => set('grossWeight', e.target.value ? Number(e.target.value) : null)}
-                />
-              </Field>
-              <Field label={t('products.netWeight')}>
-                <input
-                  type="number"
-                  step="0.001"
-                  className="input"
-                  value={form.netWeight ?? ''}
-                  onChange={(e) => set('netWeight', e.target.value ? Number(e.target.value) : null)}
-                />
-              </Field>
-              <Field label={t('products.stoneWeight')}>
-                <input
-                  type="number"
-                  step="0.001"
-                  className="input"
-                  value={form.stoneWeight ?? ''}
-                  onChange={(e) => set('stoneWeight', e.target.value ? Number(e.target.value) : null)}
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t('products.makingCharge')}>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input"
-                  value={form.makingCharge ?? ''}
-                  onChange={(e) => set('makingCharge', e.target.value ? Number(e.target.value) : null)}
-                />
-              </Field>
-              <Field label={t('products.makingChargeType')}>
-                <select
-                  className="input"
-                  value={form.makingChargeType ?? 'percent'}
-                  onChange={(e) => set('makingChargeType', e.target.value as MakingChargeType)}
-                >
-                  {MAKING_CHARGE_TYPES.map((mc) => (
-                    <option key={mc} value={mc}>
-                      {t(`products.${mc}`)}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t('products.wastagePct')}>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input"
-                  value={form.wastagePct ?? ''}
-                  onChange={(e) => set('wastagePct', e.target.value ? Number(e.target.value) : null)}
-                />
-              </Field>
-              <Field label={t('products.hallmarkNo')}>
-                <input
-                  className="input"
-                  value={form.hallmarkNo ?? ''}
-                  onChange={(e) => set('hallmarkNo', e.target.value || null)}
-                />
-              </Field>
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={form.isRateBased}
-                onChange={(e) => set('isRateBased', e.target.checked)}
-              />
-              {t('products.isRateBased')}
-            </label>
           </>
         ) : (
           <Field label={t('products.sku')}>

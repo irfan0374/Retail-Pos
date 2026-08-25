@@ -15,8 +15,7 @@ export interface CartLineInput {
 }
 
 export interface ManagerOverride {
-  managerUsername: string
-  managerPassword: string
+  managerPin: string
 }
 
 export interface FinalizeSaleInput {

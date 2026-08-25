@@ -51,7 +51,5 @@ export function can(role: Role, permission: Permission): boolean {
   return ROLE_PERMISSIONS[role].includes(permission)
 }
 
-export const IDLE_LOGOUT_MS = 5 * 60 * 1000
-
 /** SKU of the system placeholder product old-gold exchange lines attach to (seeded on first boot). */
 export const EXCHANGE_PLACEHOLDER_SKU = 'SYSTEM-EXCHANGE'

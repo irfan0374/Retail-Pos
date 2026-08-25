@@ -38,6 +38,9 @@ export const IPC = {
   AUTH_LOGIN: 'auth:login',
   AUTH_LOGOUT: 'auth:logout',
   AUTH_CURRENT: 'auth:current',
+  AUTH_CHANGE_OWN_PIN: 'auth:changeOwnPin',
+
+  USERS_RESET_PIN: 'users:resetPin',
 
   PRODUCTS_LIST: 'products:list',
   PRODUCTS_SEARCH: 'products:search',
@@ -60,7 +63,7 @@ export const IPC = {
 
   SALES_FINALIZE: 'sales:finalize',
   SALES_FIND_BY_INVOICE: 'sales:findByInvoice',
-  SALES_OPEN_DRAWER: 'sales:openDrawer',
+  SALES_REPRINT: 'sales:reprint',
 
   HELD_SALES_LIST: 'heldSales:list',
   HELD_SALES_GET: 'heldSales:get',
@@ -111,8 +114,17 @@ export const IPC = {
 } as const
 
 export interface LoginRequest {
-  username: string
-  password: string
+  pin: string
+}
+
+export interface ChangeOwnPinRequest {
+  currentPin: string
+  newPin: string
+}
+
+export interface ResetUserPinRequest {
+  userId: number
+  newPin: string
 }
 
 export interface UpsertMetalRateRequest {
@@ -139,6 +151,10 @@ export interface IpcApi {
     login(req: LoginRequest): Promise<SafeUser>
     logout(): Promise<void>
     current(): Promise<SafeUser | null>
+    changeOwnPin(req: ChangeOwnPinRequest): Promise<void>
+  }
+  users: {
+    resetPin(req: ResetUserPinRequest): Promise<void>
   }
   products: {
     list(filter?: { type?: Product['type']; activeOnly?: boolean }): Promise<Product[]>
@@ -166,7 +182,7 @@ export interface IpcApi {
   sales: {
     finalize(input: FinalizeSaleInput): Promise<SaleWithItems>
     findByInvoice(invoiceNo: string): Promise<SaleWithItems | null>
-    openDrawer(): Promise<void>
+    reprint(saleId: number): Promise<void>
   }
   heldSales: {
     list(): Promise<HeldSale[]>

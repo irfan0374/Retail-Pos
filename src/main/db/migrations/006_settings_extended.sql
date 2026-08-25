@@ -1,0 +1,6 @@
+ALTER TABLE app_settings ADD COLUMN address TEXT NOT NULL DEFAULT '';
+ALTER TABLE app_settings ADD COLUMN phone TEXT NOT NULL DEFAULT '';
+ALTER TABLE app_settings ADD COLUMN idle_logout_minutes INTEGER NOT NULL DEFAULT 5;
+ALTER TABLE app_settings ADD COLUMN show_old_gold_exchange INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE app_settings ADD COLUMN show_returns INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE app_settings ADD COLUMN show_metal_rates INTEGER NOT NULL DEFAULT 1;

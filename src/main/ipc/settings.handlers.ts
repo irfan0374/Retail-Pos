@@ -8,7 +8,13 @@ import { getSettings, updateSettings } from '../db/repositories/settings.repo'
 
 const settingsSchema = z.object({
   shopName: z.string(),
-  trn: z.string()
+  trn: z.string(),
+  address: z.string(),
+  phone: z.string(),
+  idleLogoutMinutes: z.number().int().min(1).max(120),
+  showOldGoldExchange: z.boolean(),
+  showReturns: z.boolean(),
+  showMetalRates: z.boolean()
 })
 
 export function registerSettingsHandlers(): void {

@@ -5,7 +5,7 @@ interface AuthState {
   user: SafeUser | null
   status: 'loading' | 'ready'
   refresh: () => Promise<void>
-  login: (username: string, password: string) => Promise<void>
+  login: (pin: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -18,8 +18,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user, status: 'ready' })
   },
 
-  login: async (username, password) => {
-    const user = await window.api.auth.login({ username, password })
+  login: async (pin) => {
+    const user = await window.api.auth.login({ pin })
     set({ user })
   },
 

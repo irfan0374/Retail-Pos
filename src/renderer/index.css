@@ -9,6 +9,17 @@ body {
   @apply bg-slate-50 text-slate-900 antialiased;
 }
 
+/* No increment/decrement spinner arrows on any number input, anywhere in the app. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 @layer components {
   .input {
     @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm;

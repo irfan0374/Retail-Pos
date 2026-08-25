@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { IPC } from '@shared/types/ipc-contract'
 import { CASHIER_MAX_DISCOUNT_PCT } from '@shared/constants'
 import { calculateLineTotals, impliedDiscountPct, round2 } from '@shared/pricing'
-import { requireSession, verifyManagerCredentials } from '../services/auth.service'
+import { requireSession, verifyManagerPin } from '../services/auth.service'
 import { resolveUnitPrice } from '../services/pricing.service'
 import { findProductById } from '../db/repositories/products.repo'
 import {
@@ -35,9 +35,7 @@ const finalizeSchema = z.object({
       })
     )
     .min(1),
-  managerOverride: z
-    .object({ managerUsername: z.string().min(1), managerPassword: z.string().min(1) })
-    .optional()
+  managerOverride: z.object({ managerPin: z.string().regex(/^\d{4}$/) }).optional()
 })
 
 /**
@@ -86,10 +84,7 @@ export async function finalizeSaleWithChecks(
     if (!input.managerOverride) {
       throw new Error('Discount exceeds the cashier limit — manager override required')
     }
-    const manager = verifyManagerCredentials(
-      input.managerOverride.managerUsername,
-      input.managerOverride.managerPassword
-    )
+    const manager = verifyManagerPin(input.managerOverride.managerPin)
     recordAuditLog({
       userId: cashier.id,
       action: 'checkout.discount_override',
@@ -123,6 +118,13 @@ export async function finalizeSaleWithChecks(
   return sale
 }
 
+export async function reprintSale(user: SafeUser, saleId: number): Promise<void> {
+  const sale = getSaleWithItemsById(saleId)
+  if (!sale) throw new Error(`Sale ${saleId} not found`)
+  await getPrinter().printReceipt(sale)
+  recordAuditLog({ userId: user.id, action: 'sales.reprint', tableName: 'sales', recordId: sale.id })
+}
+
 export function registerSalesHandlers(): void {
   ipcMain.handle(IPC.SALES_FINALIZE, async (_event, payload) => {
     const cashier = requireSession()
@@ -136,8 +138,8 @@ export function registerSalesHandlers(): void {
     return sale ? getSaleWithItemsById(sale.id) : null
   })
 
-  ipcMain.handle(IPC.SALES_OPEN_DRAWER, async () => {
-    requireSession()
-    await getPrinter().openDrawer()
+  ipcMain.handle(IPC.SALES_REPRINT, async (_event, saleId) => {
+    const user = requireSession()
+    await reprintSale(user, Number(saleId))
   })
 }

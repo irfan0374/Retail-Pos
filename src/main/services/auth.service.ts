@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { findUserByUsername } from '../db/repositories/users.repo'
+import { findUserById, listActiveUserRows, updatePasswordHash, type UserRow } from '../db/repositories/users.repo'
 import { recordAuditLog } from '../db/repositories/auditLog.repo'
 import type { SafeUser } from '@shared/types/user'
 
@@ -9,13 +9,21 @@ function toSafeUser(row: { id: number; name: string; username: string; role: Saf
   return { id: row.id, name: row.name, username: row.username, role: row.role, isActive: !!row.is_active }
 }
 
-export function login(username: string, password: string): SafeUser {
-  const row = findUserByUsername(username)
-  const passwordOk = row ? bcrypt.compareSync(password, row.password_hash) : false
+/** No username at login — the PIN itself identifies the user, so every active user's hash is checked. */
+function findUserByPin(pin: string, roleFilter?: SafeUser['role'][]): UserRow | null {
+  const candidates = listActiveUserRows().filter((row) => !roleFilter || roleFilter.includes(row.role))
+  for (const row of candidates) {
+    if (bcrypt.compareSync(pin, row.password_hash)) return row
+  }
+  return null
+}
 
-  if (!row || !passwordOk) {
-    recordAuditLog({ userId: row?.id ?? null, action: 'auth.login_failed', details: { username } })
-    throw new Error('Invalid username or password')
+export function login(pin: string): SafeUser {
+  const row = findUserByPin(pin)
+
+  if (!row) {
+    recordAuditLog({ userId: null, action: 'auth.login_failed' })
+    throw new Error('Incorrect PIN')
   }
 
   const user = toSafeUser(row)
@@ -42,16 +50,25 @@ export function requireSession(): SafeUser {
 }
 
 /**
- * Verifies a manager/admin's credentials without changing the active session — used for
- * in-line discount overrides at checkout, where the cashier stays logged in.
+ * Verifies a manager/admin's PIN without changing the active session — used for in-line discount
+ * overrides at checkout, where the cashier stays logged in.
  */
-export function verifyManagerCredentials(username: string, password: string): SafeUser {
-  const row = findUserByUsername(username)
-  if (!row || !row.is_active || (row.role !== 'manager' && row.role !== 'admin')) {
-    throw new Error('Override user is not an active manager or admin')
-  }
-  if (!bcrypt.compareSync(password, row.password_hash)) {
-    throw new Error('Invalid manager credentials')
-  }
+export function verifyManagerPin(pin: string): SafeUser {
+  const row = findUserByPin(pin, ['manager', 'admin'])
+  if (!row) throw new Error('Invalid manager PIN')
   return toSafeUser(row)
+}
+
+/** Self-service PIN change — requires knowing the current PIN. */
+export function changeOwnPin(userId: number, currentPin: string, newPin: string): void {
+  const row = findUserById(userId)
+  if (!row || !bcrypt.compareSync(currentPin, row.password_hash)) {
+    throw new Error('Current PIN is incorrect')
+  }
+  updatePasswordHash(userId, bcrypt.hashSync(newPin, 10))
+}
+
+/** Admin-only — resets another user's PIN without needing to know the old one. */
+export function resetUserPin(userId: number, newPin: string): void {
+  updatePasswordHash(userId, bcrypt.hashSync(newPin, 10))
 }

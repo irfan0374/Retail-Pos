@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Download, Printer } from 'lucide-react'
 import { formatAed } from '../../lib/format'
 import type { Product } from '@shared/types/product'
 import type { Sale, PaymentMethod } from '@shared/types/sale'
@@ -16,6 +17,7 @@ export function SalesHistoryScreen() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
   const [productId, setProductId] = useState<number | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
+  const [reprintingId, setReprintingId] = useState<number | null>(null)
 
   useEffect(() => {
     void window.api.reports.usersList().then(setUsers)
@@ -39,6 +41,15 @@ export function SalesHistoryScreen() {
   useEffect(() => {
     void search()
   }, [search])
+
+  async function handleReprint(saleId: number) {
+    setReprintingId(saleId)
+    try {
+      await window.api.sales.reprint(saleId)
+    } finally {
+      setReprintingId(null)
+    }
+  }
 
   async function handleExport() {
     if (!dateFrom || !dateTo) return
@@ -107,7 +118,12 @@ export function SalesHistoryScreen() {
       </div>
 
       <div className="mb-3 flex items-center gap-3">
-        <button onClick={() => void handleExport()} disabled={!dateFrom || !dateTo} className="btn-secondary">
+        <button
+          onClick={() => void handleExport()}
+          disabled={!dateFrom || !dateTo}
+          className="btn-secondary flex items-center gap-1.5"
+        >
+          <Download className="h-4 w-4" />
           {t('reports.exportExcel')}
         </button>
         {exportMessage && <p className="text-xs text-slate-500">{exportMessage}</p>}
@@ -122,6 +138,7 @@ export function SalesHistoryScreen() {
               <th className="px-4 py-2">{t('reports.cashier')}</th>
               <th className="px-4 py-2">{t('reports.paymentMethod')}</th>
               <th className="px-4 py-2">{t('reports.total')}</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -132,11 +149,21 @@ export function SalesHistoryScreen() {
                 <td className="px-4 py-2">{usersById[s.cashierId]?.name ?? `#${s.cashierId}`}</td>
                 <td className="px-4 py-2 capitalize">{s.paymentMethod}</td>
                 <td className="px-4 py-2 font-medium">{formatAed(s.total)}</td>
+                <td className="px-4 py-2 text-right">
+                  <button
+                    onClick={() => void handleReprint(s.id)}
+                    disabled={reprintingId === s.id}
+                    className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900 disabled:opacity-50"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    {t('reports.reprint')}
+                  </button>
+                </td>
               </tr>
             ))}
             {sales.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                   {t('reports.noSales')}
                 </td>
               </tr>

@@ -1,15 +1,15 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { getLanguage, setLanguage, type AppLanguage } from '../../i18n'
+import { PinPad } from '../../components/PinPad'
 
 export function LoginScreen() {
   const { t } = useTranslation()
   const login = useAuthStore((s) => s.login)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const [language, setLanguageState] = useState<AppLanguage>(getLanguage())
 
   function toggleLanguage() {
@@ -18,14 +18,14 @@ export function LoginScreen() {
     setLanguageState(next)
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
+  async function handlePin(pin: string) {
     setSubmitting(true)
     setError(null)
     try {
-      await login(username, password)
+      await login(pin)
     } catch {
       setError(t('auth.loginError'))
+      setAttempt((a) => a + 1)
     } finally {
       setSubmitting(false)
     }
@@ -33,10 +33,7 @@ export function LoginScreen() {
 
   return (
     <div className="flex h-screen items-center justify-center bg-slate-100">
-      <form
-        onSubmit={handleSubmit}
-        className="w-80 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
-      >
+      <div className="w-80 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-xl font-semibold">{t('app.title')}</h1>
           <button
@@ -47,33 +44,15 @@ export function LoginScreen() {
             {language === 'en' ? 'العربية' : 'English'}
           </button>
         </div>
-        <label className="mb-3 block text-sm font-medium text-slate-700">
-          {t('auth.username')}
-          <input
-            autoFocus
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </label>
-        <label className="mb-4 block text-sm font-medium text-slate-700">
-          {t('auth.password')}
-          <input
-            type="password"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
-        >
-          {submitting ? t('auth.loggingIn') : t('auth.login')}
-        </button>
-      </form>
+
+        <p className="mb-4 text-center text-sm text-slate-500">{t('auth.enterPin')}</p>
+
+        <div className="flex justify-center">
+          <PinPad key={attempt} onComplete={(pin) => void handlePin(pin)} disabled={submitting} />
+        </div>
+
+        {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
+      </div>
     </div>
   )
 }

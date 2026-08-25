@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/authStore'
+import { useSettingsStore } from './store/settingsStore'
 import { LoginScreen } from './features/auth/LoginScreen'
 import { AppShell, type Screen } from './app/AppShell'
 import { CheckoutScreen } from './features/checkout/CheckoutScreen'
@@ -14,11 +15,16 @@ import { ShopSettingsScreen } from './features/settings/ShopSettingsScreen'
 
 export default function App() {
   const { user, status, refresh } = useAuthStore()
+  const loadSettings = useSettingsStore((s) => s.load)
   const [screen, setScreen] = useState<Screen>('checkout')
 
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  useEffect(() => {
+    if (user) void loadSettings()
+  }, [user, loadSettings])
 
   if (status === 'loading') return null
   if (!user) return <LoginScreen />

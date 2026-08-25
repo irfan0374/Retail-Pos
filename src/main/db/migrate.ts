@@ -4,6 +4,7 @@ import m002Purchases from './migrations/002_purchases.sql?raw'
 import m003Settings from './migrations/003_settings.sql?raw'
 import m004ReturnsAndHolds from './migrations/004_returns_and_holds.sql?raw'
 import m005Backups from './migrations/005_backups.sql?raw'
+import m006SettingsExtended from './migrations/006_settings_extended.sql?raw'
 
 interface Migration {
   name: string
@@ -16,7 +17,8 @@ const MIGRATIONS: Migration[] = [
   { name: '002_purchases', sql: m002Purchases },
   { name: '003_settings', sql: m003Settings },
   { name: '004_returns_and_holds', sql: m004ReturnsAndHolds },
-  { name: '005_backups', sql: m005Backups }
+  { name: '005_backups', sql: m005Backups },
+  { name: '006_settings_extended', sql: m006SettingsExtended }
 ]
 
 export function runMigrations(db: Database.Database): void {

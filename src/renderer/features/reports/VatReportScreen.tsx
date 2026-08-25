@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Download } from 'lucide-react'
 import { formatAed } from '../../lib/format'
 import type { VatSummary } from '@shared/types/report'
 
@@ -74,8 +75,12 @@ export function VatReportScreen() {
             <span>{t('reports.totalAmount')}</span>
             <span>{formatAed(summary.totalAmount)}</span>
           </div>
-          <button onClick={() => void handleExport()} className="btn-secondary mt-3 w-full">
-            {t('reports.exportExcel')}
+          <button
+            onClick={() => void handleExport()}
+            className="btn-primary mt-3 flex w-full items-center justify-center gap-1.5"
+          >
+            <Download className="h-4 w-4" />
+            {t('reports.exportVatFiling')}
           </button>
           {exportMessage && <p className="text-xs text-slate-500">{exportMessage}</p>}
         </div>

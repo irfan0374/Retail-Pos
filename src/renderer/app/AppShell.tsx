@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { can, IDLE_LOGOUT_MS } from '@shared/constants'
+import { can } from '@shared/constants'
 import { useAuthStore } from '../store/authStore'
+import { useSettingsStore } from '../store/settingsStore'
 import { getLanguage, setLanguage, type AppLanguage } from '../i18n'
 
 export type Screen =
@@ -25,6 +26,7 @@ export function AppShell({ screen, onNavigate, children }: Props) {
   const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const settings = useSettingsStore((s) => s.settings)
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [language, setLanguageState] = useState<AppLanguage>(getLanguage())
 
@@ -34,10 +36,12 @@ export function AppShell({ screen, onNavigate, children }: Props) {
     setLanguageState(next)
   }
 
+  const idleLogoutMs = (settings?.idleLogoutMinutes ?? 5) * 60 * 1000
+
   useEffect(() => {
     function resetIdleTimer() {
       if (idleTimer.current) clearTimeout(idleTimer.current)
-      idleTimer.current = setTimeout(() => void logout(), IDLE_LOGOUT_MS)
+      idleTimer.current = setTimeout(() => void logout(), idleLogoutMs)
     }
     resetIdleTimer()
     window.addEventListener('mousemove', resetIdleTimer)
@@ -47,18 +51,18 @@ export function AppShell({ screen, onNavigate, children }: Props) {
       window.removeEventListener('mousemove', resetIdleTimer)
       window.removeEventListener('keydown', resetIdleTimer)
     }
-  }, [logout])
+  }, [logout, idleLogoutMs])
 
   const navItems: { screen: Screen; label: string }[] = [
     { screen: 'checkout', label: t('nav.checkout') },
     { screen: 'products', label: t('nav.products') },
-    ...(user && can(user.role, 'metalRates.write')
+    ...(user && can(user.role, 'metalRates.write') && settings?.showMetalRates !== false
       ? [{ screen: 'metalRates' as const, label: t('nav.metalRates') }]
       : []),
     ...(user && can(user.role, 'purchases.read')
       ? [{ screen: 'purchases' as const, label: t('nav.purchases') }]
       : []),
-    ...(user && can(user.role, 'sales.void')
+    ...(user && can(user.role, 'sales.void') && settings?.showReturns !== false
       ? [{ screen: 'returns' as const, label: t('nav.returns') }]
       : []),
     ...(user && can(user.role, 'reports.financial')

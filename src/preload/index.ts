@@ -6,7 +6,11 @@ const api: IpcApi = {
   auth: {
     login: (req) => ipcRenderer.invoke(IPC.AUTH_LOGIN, req),
     logout: () => ipcRenderer.invoke(IPC.AUTH_LOGOUT),
-    current: () => ipcRenderer.invoke(IPC.AUTH_CURRENT)
+    current: () => ipcRenderer.invoke(IPC.AUTH_CURRENT),
+    changeOwnPin: (req) => ipcRenderer.invoke(IPC.AUTH_CHANGE_OWN_PIN, req)
+  },
+  users: {
+    resetPin: (req) => ipcRenderer.invoke(IPC.USERS_RESET_PIN, req)
   },
   products: {
     list: (filter) => ipcRenderer.invoke(IPC.PRODUCTS_LIST, filter),
@@ -34,7 +38,7 @@ const api: IpcApi = {
   sales: {
     finalize: (input) => ipcRenderer.invoke(IPC.SALES_FINALIZE, input),
     findByInvoice: (invoiceNo) => ipcRenderer.invoke(IPC.SALES_FIND_BY_INVOICE, invoiceNo),
-    openDrawer: () => ipcRenderer.invoke(IPC.SALES_OPEN_DRAWER)
+    reprint: (saleId) => ipcRenderer.invoke(IPC.SALES_REPRINT, saleId)
   },
   heldSales: {
     list: () => ipcRenderer.invoke(IPC.HELD_SALES_LIST),

@@ -12,9 +12,11 @@ import { registerCreditNoteHandlers } from './creditNotes.handlers'
 import { registerBackupHandlers } from './backups.handlers'
 import { registerDashboardHandlers } from './dashboard.handlers'
 import { registerAuditLogHandlers } from './auditLog.handlers'
+import { registerUserHandlers } from './users.handlers'
 
 export function registerIpcHandlers(): void {
   registerAuthHandlers()
+  registerUserHandlers()
   registerProductHandlers()
   registerMetalRateHandlers()
   registerCustomerHandlers()
