@@ -7,3 +7,10 @@ export interface AuditLogEntry {
   details: string | null
   timestamp: string
 }
+
+export interface AuditLogFilter {
+  dateFrom?: string
+  dateTo?: string
+  userId?: number
+  action?: string
+}

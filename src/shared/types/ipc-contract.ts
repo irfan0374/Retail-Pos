@@ -19,10 +19,20 @@ import type {
   PurchaseWithItems,
   StockMovement
 } from './purchase'
-import type { ExportResult, MonthlySalesSummary, SalesHistoryFilter, VatSummary, ZReport } from './report'
-import type { ShopSettings } from './settings'
+import type {
+  DashboardSummary,
+  ExportResult,
+  MonthlySalesSummary,
+  SalesHistoryFilter,
+  SlowMovingProduct,
+  TopSellingProduct,
+  VatSummary,
+  ZReport
+} from './report'
+import type { BackupFileInfo, BackupSettings, ShopSettings } from './settings'
 import type { HeldSale, HeldSaleWithItems, NewHeldSaleInput } from './heldSale'
 import type { CreditNote, CreditNoteWithItems, NewCreditNoteInput } from './creditNote'
+import type { AuditLogEntry, AuditLogFilter } from './auditLog'
 
 export const IPC = {
   AUTH_LOGIN: 'auth:login',
@@ -86,7 +96,18 @@ export const IPC = {
   REPORTS_EXPORT_PURCHASE_REGISTER: 'reports:exportPurchaseRegister',
 
   SETTINGS_GET: 'settings:get',
-  SETTINGS_UPDATE: 'settings:update'
+  SETTINGS_UPDATE: 'settings:update',
+
+  DASHBOARD_SUMMARY: 'dashboard:summary',
+  DASHBOARD_TOP_SELLING: 'dashboard:topSelling',
+  DASHBOARD_SLOW_MOVING: 'dashboard:slowMoving',
+
+  AUDIT_LOG_LIST: 'auditLog:list',
+
+  BACKUPS_GET_SETTINGS: 'backups:getSettings',
+  BACKUPS_PICK_DIRECTORY: 'backups:pickDirectory',
+  BACKUPS_RUN_NOW: 'backups:runNow',
+  BACKUPS_LIST_FILES: 'backups:listFiles'
 } as const
 
 export interface LoginRequest {
@@ -187,5 +208,19 @@ export interface IpcApi {
   settings: {
     get(): Promise<ShopSettings>
     update(input: ShopSettings): Promise<ShopSettings>
+  }
+  dashboard: {
+    summary(): Promise<DashboardSummary>
+    topSelling(): Promise<TopSellingProduct[]>
+    slowMoving(): Promise<SlowMovingProduct[]>
+  }
+  auditLog: {
+    list(filter: AuditLogFilter): Promise<AuditLogEntry[]>
+  }
+  backups: {
+    getSettings(): Promise<BackupSettings>
+    pickDirectory(): Promise<BackupSettings>
+    runNow(): Promise<BackupSettings>
+    listFiles(): Promise<BackupFileInfo[]>
   }
 }

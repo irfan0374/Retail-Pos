@@ -9,11 +9,12 @@ import {
 } from './seed'
 
 let db: Database.Database | null = null
+let dbPath: string | null = null
 
 export function initDatabase(): Database.Database {
   if (db) return db
 
-  const dbPath = join(app.getPath('userData'), 'retailkey-pos.db')
+  dbPath = join(app.getPath('userData'), 'retailkey-pos.db')
   db = new Database(dbPath)
   db.pragma('journal_mode = WAL')
   db.pragma('foreign_keys = ON')
@@ -29,4 +30,9 @@ export function initDatabase(): Database.Database {
 export function getDb(): Database.Database {
   if (!db) throw new Error('Database not initialized — call initDatabase() first')
   return db
+}
+
+export function getDbPath(): string {
+  if (!dbPath) throw new Error('Database not initialized — call initDatabase() first')
+  return dbPath
 }

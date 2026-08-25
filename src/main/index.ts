@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { initDatabase } from './db'
 import { registerIpcHandlers } from './ipc'
 import { createMainWindow } from './window'
+import { runBackupIfDue } from './services/backup.service'
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
@@ -19,6 +20,7 @@ if (!gotLock) {
     initDatabase()
     registerIpcHandlers()
     createMainWindow()
+    void runBackupIfDue()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createMainWindow()

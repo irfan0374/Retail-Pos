@@ -9,6 +9,9 @@ import { registerReportHandlers } from './reports.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
 import { registerHeldSaleHandlers } from './heldSales.handlers'
 import { registerCreditNoteHandlers } from './creditNotes.handlers'
+import { registerBackupHandlers } from './backups.handlers'
+import { registerDashboardHandlers } from './dashboard.handlers'
+import { registerAuditLogHandlers } from './auditLog.handlers'
 
 export function registerIpcHandlers(): void {
   registerAuthHandlers()
@@ -22,4 +25,7 @@ export function registerIpcHandlers(): void {
   registerSettingsHandlers()
   registerHeldSaleHandlers()
   registerCreditNoteHandlers()
+  registerBackupHandlers()
+  registerDashboardHandlers()
+  registerAuditLogHandlers()
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
+import { getLanguage, setLanguage, type AppLanguage } from '../../i18n'
 
 export function LoginScreen() {
   const { t } = useTranslation()
@@ -9,6 +10,13 @@ export function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [language, setLanguageState] = useState<AppLanguage>(getLanguage())
+
+  function toggleLanguage() {
+    const next = language === 'en' ? 'ar' : 'en'
+    setLanguage(next)
+    setLanguageState(next)
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -29,7 +37,16 @@ export function LoginScreen() {
         onSubmit={handleSubmit}
         className="w-80 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <h1 className="mb-6 text-center text-xl font-semibold">{t('app.title')}</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">{t('app.title')}</h1>
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-200"
+          >
+            {language === 'en' ? 'العربية' : 'English'}
+          </button>
+        </div>
         <label className="mb-3 block text-sm font-medium text-slate-700">
           {t('auth.username')}
           <input

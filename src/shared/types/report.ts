@@ -52,3 +52,25 @@ export interface ExportResult {
   success: boolean
   filePath?: string
 }
+
+export interface DashboardSummary {
+  revenueToday: number
+  revenueThisMonth: number
+  /** (revenue - cost) / revenue, using each sale line's product's *current* cost price — an
+   *  approximation, since cost price isn't snapshotted per sale line. */
+  marginThisMonthPct: number
+}
+
+export interface TopSellingProduct {
+  productId: number
+  productName: string
+  qtySold: number
+  revenue: number
+}
+
+export interface SlowMovingProduct {
+  productId: number
+  productName: string
+  stockQty: number
+  lastSoldAt: string | null
+}

@@ -17,6 +17,8 @@
     "purchases": "Purchases",
     "returns": "Returns",
     "reports": "Reports",
+    "dashboard": "Dashboard",
+    "auditLog": "Audit Log",
     "settings": "Settings"
   },
   "products": {
@@ -199,7 +201,17 @@
     "shopName": "Shop Name",
     "trn": "Tax Registration Number (TRN)",
     "save": "Save Settings",
-    "saved": "Settings saved"
+    "saved": "Settings saved",
+    "backupsTitle": "Automated Backups",
+    "backupFolder": "Backup Folder",
+    "noBackupFolder": "No folder selected",
+    "chooseFolder": "Choose Folder",
+    "backupNow": "Backup Now",
+    "lastBackup": "Last Backup",
+    "never": "Never",
+    "backupFiles": "Backup Files",
+    "noBackupFiles": "No backups yet",
+    "backupNote": "Backups run automatically once a day when the app starts, if a folder is set. To restore, close the app and copy a backup file over the live database file — do this carefully and keep a spare copy."
   },
   "returns": {
     "title": "Returns & Exchanges",
@@ -211,5 +223,30 @@
     "issueCreditNote": "Issue Credit Note",
     "creditNoteIssued": "Credit note issued",
     "creditTotal": "Total credited"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "revenueToday": "Revenue Today",
+    "revenueThisMonth": "Revenue This Month",
+    "marginThisMonth": "Margin This Month",
+    "topSelling": "Top-Selling Products",
+    "slowMoving": "Slow-Moving Products",
+    "qtySold": "Qty Sold",
+    "revenue": "Revenue",
+    "stockQty": "Stock",
+    "lastSold": "Last Sold",
+    "neverSold": "Never sold"
+  },
+  "auditLog": {
+    "title": "Audit Log",
+    "user": "User",
+    "allUsers": "All Users",
+    "action": "Action",
+    "allActions": "All Actions",
+    "timestamp": "Timestamp",
+    "table": "Table",
+    "details": "Details",
+    "filter": "Filter",
+    "noEntries": "No audit log entries found"
   }
 }

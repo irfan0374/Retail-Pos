@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { BackupsSection } from './BackupsSection'
 import type { ShopSettings } from '@shared/types/settings'
 
 export function ShopSettingsScreen() {
@@ -45,6 +46,8 @@ export function ShopSettingsScreen() {
           {t('settings.save')}
         </button>
       </form>
+
+      <BackupsSection />
     </div>
   )
 }

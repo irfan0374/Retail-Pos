@@ -8,6 +8,8 @@ import { MetalRateScreen } from './features/metal-rates/MetalRateScreen'
 import { PurchasesScreen } from './features/purchases/PurchasesScreen'
 import { ReturnsScreen } from './features/returns/ReturnsScreen'
 import { ReportsScreen } from './features/reports/ReportsScreen'
+import { DashboardScreen } from './features/dashboard/DashboardScreen'
+import { AuditLogScreen } from './features/auditLog/AuditLogScreen'
 import { ShopSettingsScreen } from './features/settings/ShopSettingsScreen'
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
       {screen === 'purchases' && <PurchasesScreen />}
       {screen === 'returns' && <ReturnsScreen />}
       {screen === 'reports' && <ReportsScreen />}
+      {screen === 'dashboard' && <DashboardScreen />}
+      {screen === 'auditLog' && <AuditLogScreen />}
       {screen === 'settings' && <ShopSettingsScreen />}
     </AppShell>
   )

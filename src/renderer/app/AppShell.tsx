@@ -1,9 +1,19 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { can, IDLE_LOGOUT_MS } from '@shared/constants'
 import { useAuthStore } from '../store/authStore'
+import { getLanguage, setLanguage, type AppLanguage } from '../i18n'
 
-export type Screen = 'checkout' | 'products' | 'metalRates' | 'purchases' | 'returns' | 'reports' | 'settings'
+export type Screen =
+  | 'checkout'
+  | 'products'
+  | 'metalRates'
+  | 'purchases'
+  | 'returns'
+  | 'reports'
+  | 'dashboard'
+  | 'auditLog'
+  | 'settings'
 
 interface Props {
   screen: Screen
@@ -16,6 +26,13 @@ export function AppShell({ screen, onNavigate, children }: Props) {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [language, setLanguageState] = useState<AppLanguage>(getLanguage())
+
+  function toggleLanguage() {
+    const next = language === 'en' ? 'ar' : 'en'
+    setLanguage(next)
+    setLanguageState(next)
+  }
 
   useEffect(() => {
     function resetIdleTimer() {
@@ -45,7 +62,11 @@ export function AppShell({ screen, onNavigate, children }: Props) {
       ? [{ screen: 'returns' as const, label: t('nav.returns') }]
       : []),
     ...(user && can(user.role, 'reports.financial')
-      ? [{ screen: 'reports' as const, label: t('nav.reports') }]
+      ? [
+          { screen: 'reports' as const, label: t('nav.reports') },
+          { screen: 'dashboard' as const, label: t('nav.dashboard') },
+          { screen: 'auditLog' as const, label: t('nav.auditLog') }
+        ]
       : []),
     ...(user && can(user.role, 'settings.write')
       ? [{ screen: 'settings' as const, label: t('nav.settings') }]
@@ -79,6 +100,13 @@ export function AppShell({ screen, onNavigate, children }: Props) {
               {user.name} · <span className="uppercase">{user.role}</span>
             </span>
           )}
+          <button
+            onClick={toggleLanguage}
+            className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"
+            title={language === 'en' ? 'العربية' : 'English'}
+          >
+            {language === 'en' ? 'العربية' : 'English'}
+          </button>
           <button
             onClick={() => void logout()}
             className="rounded-md bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-200"

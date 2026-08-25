@@ -78,6 +78,20 @@ const api: IpcApi = {
   settings: {
     get: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
     update: (input) => ipcRenderer.invoke(IPC.SETTINGS_UPDATE, input)
+  },
+  dashboard: {
+    summary: () => ipcRenderer.invoke(IPC.DASHBOARD_SUMMARY),
+    topSelling: () => ipcRenderer.invoke(IPC.DASHBOARD_TOP_SELLING),
+    slowMoving: () => ipcRenderer.invoke(IPC.DASHBOARD_SLOW_MOVING)
+  },
+  auditLog: {
+    list: (filter) => ipcRenderer.invoke(IPC.AUDIT_LOG_LIST, filter)
+  },
+  backups: {
+    getSettings: () => ipcRenderer.invoke(IPC.BACKUPS_GET_SETTINGS),
+    pickDirectory: () => ipcRenderer.invoke(IPC.BACKUPS_PICK_DIRECTORY),
+    runNow: () => ipcRenderer.invoke(IPC.BACKUPS_RUN_NOW),
+    listFiles: () => ipcRenderer.invoke(IPC.BACKUPS_LIST_FILES)
   }
 }
 
