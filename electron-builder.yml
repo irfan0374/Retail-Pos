@@ -1,0 +1,26 @@
+appId: com.retailkey.pos
+productName: RetailKey POS
+# better-sqlite3 ships N-API prebuilds for every target platform already, so no
+# per-Electron-version native rebuild is needed — and @electron/rebuild's node-gyp
+# step fails in this project because the folder path contains a space. Skip it.
+npmRebuild: false
+directories:
+  buildResources: resources
+  output: release
+files:
+  - out/**/*
+  - package.json
+asarUnpack:
+  - '**/*.node'
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: dir
+linux:
+  target: dir

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "RetailKey POS"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Log In",
+    "logout": "Logout",
+    "loginError": "Invalid username or password",
+    "loggingIn": "Logging in…"
+  },
+  "nav": {
+    "checkout": "Checkout",
+    "products": "Products",
+    "metalRates": "Metal Rates"
+  },
+  "products": {
+    "title": "Products",
+    "newProduct": "New Product",
+    "jewelry": "Jewelry",
+    "gift": "Gift",
+    "name": "Name",
+    "category": "Category",
+    "barcode": "Barcode",
+    "sku": "SKU",
+    "metalType": "Metal Type",
+    "purity": "Purity",
+    "grossWeight": "Gross Weight (g)",
+    "netWeight": "Net Weight (g)",
+    "stoneWeight": "Stone Weight (g)",
+    "makingCharge": "Making Charge",
+    "makingChargeType": "Making Charge Type",
+    "fixed": "Fixed (AED)",
+    "percent": "Percent (%)",
+    "wastagePct": "Wastage (%)",
+    "isRateBased": "Price from daily metal rate",
+    "hallmarkNo": "Hallmark / Certification No.",
+    "costPrice": "Cost Price",
+    "sellingPrice": "Selling Price",
+    "stockQty": "Stock Qty",
+    "lowStockThreshold": "Low Stock Threshold",
+    "save": "Save",
+    "cancel": "Cancel",
+    "printLabel": "Print Label"
+  },
+  "metalRates": {
+    "title": "Daily Metal Rates",
+    "metalType": "Metal",
+    "purity": "Purity",
+    "ratePerGram": "Rate per Gram (AED)",
+    "save": "Save Rate",
+    "latestRates": "Latest Rates on File"
+  },
+  "checkout": {
+    "scanPrompt": "Scan barcode or search…",
+    "search": "Search",
+    "cart": "Cart",
+    "empty": "Cart is empty",
+    "qty": "Qty",
+    "unitPrice": "Unit Price",
+    "lineDiscount": "Discount",
+    "subtotal": "Subtotal",
+    "billDiscount": "Bill Discount",
+    "vat": "VAT (5%)",
+    "total": "Total",
+    "paymentChannel": "Payment Channel",
+    "online": "Online",
+    "offline": "Offline",
+    "paymentMethod": "Payment Method",
+    "cash": "Cash",
+    "card": "Card",
+    "bankTransfer": "Bank Transfer",
+    "paymentLink": "Payment Link",
+    "finalize": "Finalize Sale",
+    "managerOverrideRequired": "Discount exceeds your limit — manager approval required",
+    "managerOverride": "Manager Override",
+    "managerUsername": "Manager Username",
+    "managerPassword": "Manager Password",
+    "approve": "Approve",
+    "receipt": "Receipt"
+  }
+}

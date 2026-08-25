@@ -1,0 +1,105 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { RoleGate } from '../../app/RoleGate'
+import { useAuthStore } from '../../store/authStore'
+import { can } from '@shared/constants'
+import { formatAed } from '../../lib/format'
+import { ProductFormModal } from './ProductFormModal'
+import { BarcodeLabelPreview } from './BarcodeLabelPreview'
+import type { Category, Product } from '@shared/types/product'
+
+export function ProductListScreen() {
+  const { t } = useTranslation()
+  const user = useAuthStore((s) => s.user)
+  const canEdit = !!user && can(user.role, 'products.write')
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [editing, setEditing] = useState<Product | 'new' | null>(null)
+  const [labelFor, setLabelFor] = useState<Product | null>(null)
+
+  const load = useCallback(async () => {
+    const [productList, categoryList] = await Promise.all([
+      window.api.products.list({ activeOnly: true }),
+      window.api.categories.list()
+    ])
+    setProducts(productList)
+    setCategories(categoryList)
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-semibold">{t('products.title')}</h1>
+        <RoleGate permission="products.write">
+          <button onClick={() => setEditing('new')} className="btn-primary">
+            {t('products.newProduct')}
+          </button>
+        </RoleGate>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-4 py-2">{t('products.name')}</th>
+              <th className="px-4 py-2">{t('products.barcode')}</th>
+              <th className="px-4 py-2">Type</th>
+              <th className="px-4 py-2">{t('products.sellingPrice')}</th>
+              <th className="px-4 py-2">{t('products.stockQty')}</th>
+              <th className="px-4 py-2" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {products.map((p) => (
+              <tr key={p.id} className="hover:bg-slate-50">
+                <td className="px-4 py-2">
+                  {canEdit ? (
+                    <button className="text-left font-medium text-slate-900" onClick={() => setEditing(p)}>
+                      {p.name}
+                    </button>
+                  ) : (
+                    <span className="font-medium text-slate-900">{p.name}</span>
+                  )}
+                </td>
+                <td className="px-4 py-2 font-mono text-xs text-slate-500">{p.barcode}</td>
+                <td className="px-4 py-2 capitalize">{p.type}</td>
+                <td className="px-4 py-2">{formatAed(p.sellingPrice)}</td>
+                <td className="px-4 py-2">{p.stockQty}</td>
+                <td className="px-4 py-2 text-right">
+                  <button onClick={() => setLabelFor(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                    {t('products.printLabel')}
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  —
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <ProductFormModal
+          categories={categories}
+          existing={editing === 'new' ? undefined : editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            void load()
+          }}
+        />
+      )}
+
+      {labelFor && <BarcodeLabelPreview product={labelFor} onClose={() => setLabelFor(null)} />}
+    </div>
+  )
+}
