@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../../components/Modal'
+import { CategoryFormModal } from './CategoryFormModal'
 import type { Category, MakingChargeType, MetalType, NewProductInput, Product } from '@shared/types/product'
 
 const METAL_TYPES: MetalType[] = ['gold', 'silver', 'platinum', 'imitation']
@@ -31,7 +32,7 @@ function toInput(p?: Product): NewProductInput {
 }
 
 export function ProductFormModal({
-  categories,
+  categories: initialCategories,
   existing,
   onClose,
   onSaved
@@ -43,6 +44,8 @@ export function ProductFormModal({
 }) {
   const { t } = useTranslation()
   const [form, setForm] = useState<NewProductInput>(toInput(existing))
+  const [categories, setCategories] = useState<Category[]>(initialCategories)
+  const [categoryModal, setCategoryModal] = useState<'create' | 'edit' | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -100,18 +103,38 @@ export function ProductFormModal({
         </Field>
 
         <Field label={t('products.category')}>
-          <select
-            className="input"
-            value={form.categoryId ?? ''}
-            onChange={(e) => set('categoryId', e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="">—</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex gap-2">
+            <select
+              className="input"
+              value={form.categoryId ?? ''}
+              onChange={(e) => set('categoryId', e.target.value ? Number(e.target.value) : null)}
+            >
+              <option value="">—</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setCategoryModal('create')}
+              className="btn-secondary shrink-0 px-3"
+              title={t('products.newCategory')}
+            >
+              +
+            </button>
+            {form.categoryId != null && (
+              <button
+                type="button"
+                onClick={() => setCategoryModal('edit')}
+                className="btn-secondary shrink-0 px-3"
+                title={t('products.editCategory')}
+              >
+                {t('products.edit')}
+              </button>
+            )}
+          </div>
         </Field>
 
         {isJewelry ? (
@@ -285,6 +308,24 @@ export function ProductFormModal({
           </button>
         </div>
       </form>
+
+      {categoryModal && (
+        <CategoryFormModal
+          existing={
+            categoryModal === 'edit' ? categories.find((c) => c.id === form.categoryId) : undefined
+          }
+          onClose={() => setCategoryModal(null)}
+          onSaved={(category) => {
+            setCategories((prev) =>
+              [...prev.filter((c) => c.id !== category.id), category].sort((a, b) =>
+                a.name.localeCompare(b.name)
+              )
+            )
+            set('categoryId', category.id)
+            setCategoryModal(null)
+          }}
+        />
+      )}
     </Modal>
   )
 }

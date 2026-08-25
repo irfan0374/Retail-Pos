@@ -8,7 +8,7 @@ import { PaymentPanel } from './PaymentPanel'
 import { ManagerOverrideModal } from './ManagerOverrideModal'
 import { ReceiptPreview } from './ReceiptPreview'
 import type { MetalRate, Product } from '@shared/types/product'
-import type { ManagerOverride, PaymentChannel, PaymentMethod, SaleWithItems } from '@shared/types/sale'
+import type { ManagerOverride, PaymentMethod, SaleWithItems } from '@shared/types/sale'
 
 const MANAGER_OVERRIDE_ERROR = 'manager override required'
 
@@ -20,7 +20,6 @@ export function CheckoutScreen() {
   const clearCart = useCartStore((s) => s.clear)
 
   const [rates, setRates] = useState<MetalRate[]>([])
-  const [channel, setChannel] = useState<PaymentChannel>('offline')
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +40,6 @@ export function CheckoutScreen() {
     try {
       const sale = await window.api.sales.finalize({
         customerId: null,
-        paymentChannel: channel,
         paymentMethod: method,
         billDiscountAmount,
         items: lines.map((l) => ({
@@ -77,7 +75,7 @@ export function CheckoutScreen() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <PaymentPanel channel={channel} method={method} onChannelChange={setChannel} onMethodChange={setMethod} />
+        <PaymentPanel method={method} onMethodChange={setMethod} />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

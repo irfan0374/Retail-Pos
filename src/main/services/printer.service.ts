@@ -20,7 +20,7 @@ function formatReceiptText(sale: SaleWithItems): string {
     `Discount: AED ${sale.discountAmount.toFixed(2)}`,
     `VAT (5%): AED ${sale.vatAmount.toFixed(2)}`,
     `Total: AED ${sale.total.toFixed(2)}`,
-    `Payment: ${sale.paymentChannel} / ${sale.paymentMethod}`
+    `Payment: ${sale.paymentMethod}`
   ]
   return lines.join('\n')
 }

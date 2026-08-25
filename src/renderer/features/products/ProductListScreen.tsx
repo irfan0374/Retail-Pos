@@ -30,6 +30,12 @@ export function ProductListScreen() {
     void load()
   }, [load])
 
+  async function handleDelete(product: Product) {
+    if (!window.confirm(t('products.deleteConfirm', { name: product.name }))) return
+    await window.api.products.deactivate(product.id)
+    void load()
+  }
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -57,22 +63,31 @@ export function ProductListScreen() {
             {products.map((p) => (
               <tr key={p.id} className="hover:bg-slate-50">
                 <td className="px-4 py-2">
-                  {canEdit ? (
-                    <button className="text-left font-medium text-slate-900" onClick={() => setEditing(p)}>
-                      {p.name}
-                    </button>
-                  ) : (
-                    <span className="font-medium text-slate-900">{p.name}</span>
-                  )}
+                  <span className="font-medium text-slate-900">{p.name}</span>
                 </td>
                 <td className="px-4 py-2 font-mono text-xs text-slate-500">{p.barcode}</td>
                 <td className="px-4 py-2 capitalize">{p.type}</td>
                 <td className="px-4 py-2">{formatAed(p.sellingPrice)}</td>
                 <td className="px-4 py-2">{p.stockQty}</td>
                 <td className="px-4 py-2 text-right">
-                  <button onClick={() => setLabelFor(p)} className="text-sm text-slate-500 hover:text-slate-900">
-                    {t('products.printLabel')}
-                  </button>
+                  <div className="flex justify-end gap-3">
+                    {canEdit && (
+                      <button onClick={() => setEditing(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                        {t('products.edit')}
+                      </button>
+                    )}
+                    <button onClick={() => setLabelFor(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                      {t('products.printLabel')}
+                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => void handleDelete(p)}
+                        className="text-sm text-red-500 hover:text-red-700"
+                      >
+                        {t('products.delete')}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

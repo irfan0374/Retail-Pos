@@ -34,9 +34,7 @@ export function ReceiptPreview({ sale, onClose }: { sale: SaleWithItems; onClose
           <span>{t('checkout.total')}</span>
           <span>{formatAed(sale.total)}</span>
         </div>
-        <p className="pt-2 text-xs text-slate-400">
-          {sale.paymentChannel} / {sale.paymentMethod}
-        </p>
+        <p className="pt-2 text-xs text-slate-400">{sale.paymentMethod}</p>
       </div>
       <button onClick={onClose} className="btn-primary mt-4 w-full">
         OK

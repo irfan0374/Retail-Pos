@@ -17,6 +17,8 @@ export const IPC = {
   PRODUCTS_GET_BARCODE_IMAGE: 'products:getBarcodeImage',
 
   CATEGORIES_LIST: 'categories:list',
+  CATEGORIES_CREATE: 'categories:create',
+  CATEGORIES_UPDATE: 'categories:update',
 
   METAL_RATES_LIST_LATEST: 'metalRates:listLatest',
   METAL_RATES_UPSERT: 'metalRates:upsert',
@@ -39,6 +41,17 @@ export interface UpsertMetalRateRequest {
   ratePerGram: number
 }
 
+export interface NewCategoryRequest {
+  name: string
+  appliesTo: Category['appliesTo']
+}
+
+export interface UpdateCategoryRequest {
+  id: number
+  name: string
+  appliesTo: Category['appliesTo']
+}
+
 /** The full typed shape of `window.api`, implemented by the preload script. */
 export interface IpcApi {
   auth: {
@@ -57,6 +70,8 @@ export interface IpcApi {
   }
   categories: {
     list(): Promise<Category[]>
+    create(input: NewCategoryRequest): Promise<Category>
+    update(input: UpdateCategoryRequest): Promise<Category>
   }
   metalRates: {
     listLatest(): Promise<MetalRate[]>

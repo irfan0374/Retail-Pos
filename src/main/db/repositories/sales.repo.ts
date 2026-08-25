@@ -2,14 +2,13 @@ import type Database from 'better-sqlite3'
 import { getDb } from '../index'
 import { decrementStock } from './products.repo'
 import { recordAuditLog } from './auditLog.repo'
-import type { PaymentChannel, PaymentMethod, Sale, SaleItem, SaleWithItems } from '@shared/types/sale'
+import type { PaymentMethod, Sale, SaleItem, SaleWithItems } from '@shared/types/sale'
 
 interface SaleRow {
   id: number
   invoice_no: string
   created_at: string
   customer_id: number | null
-  payment_channel: PaymentChannel
   payment_method: PaymentMethod
   cashier_id: number
   subtotal: number
@@ -38,7 +37,6 @@ function toSale(row: SaleRow): Sale {
     invoiceNo: row.invoice_no,
     createdAt: row.created_at,
     customerId: row.customer_id,
-    paymentChannel: row.payment_channel,
     paymentMethod: row.payment_method,
     cashierId: row.cashier_id,
     subtotal: row.subtotal,
@@ -78,7 +76,6 @@ export interface FinalizeSaleLine {
 export interface FinalizeSaleParams {
   cashierId: number
   customerId: number | null
-  paymentChannel: PaymentChannel
   paymentMethod: PaymentMethod
   subtotal: number
   discountAmount: number
@@ -107,14 +104,13 @@ export function finalizeSale(params: FinalizeSaleParams): SaleWithItems {
     const saleResult = db
       .prepare(
         `INSERT INTO sales (
-          invoice_no, customer_id, payment_channel, payment_method, cashier_id,
+          invoice_no, customer_id, payment_method, cashier_id,
           subtotal, discount_amount, vat_amount, total, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')`
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed')`
       )
       .run(
         invoiceNo,
         params.customerId,
-        params.paymentChannel,
         params.paymentMethod,
         params.cashierId,
         params.subtotal,

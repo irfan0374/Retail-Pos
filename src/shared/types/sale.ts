@@ -1,5 +1,4 @@
-export type PaymentChannel = 'online' | 'offline'
-export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'payment_link'
+export type PaymentMethod = 'cash' | 'card'
 export type SaleStatus = 'completed' | 'void' | 'held'
 
 export interface CartLineInput {
@@ -18,7 +17,6 @@ export interface ManagerOverride {
 
 export interface FinalizeSaleInput {
   customerId: number | null
-  paymentChannel: PaymentChannel
   paymentMethod: PaymentMethod
   billDiscountAmount: number
   items: CartLineInput[]
@@ -43,7 +41,6 @@ export interface Sale {
   invoiceNo: string
   createdAt: string
   customerId: number | null
-  paymentChannel: PaymentChannel
   paymentMethod: PaymentMethod
   cashierId: number
   subtotal: number

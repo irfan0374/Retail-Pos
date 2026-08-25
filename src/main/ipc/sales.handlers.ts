@@ -14,8 +14,7 @@ import type { FinalizeSaleInput, SaleWithItems } from '@shared/types/sale'
 
 const finalizeSchema = z.object({
   customerId: z.number().nullable(),
-  paymentChannel: z.enum(['online', 'offline']),
-  paymentMethod: z.enum(['cash', 'card', 'bank_transfer', 'payment_link']),
+  paymentMethod: z.enum(['cash', 'card']),
   billDiscountAmount: z.number().nonnegative(),
   items: z
     .array(
@@ -96,7 +95,6 @@ export async function finalizeSaleWithChecks(
   const sale = finalizeSale({
     cashierId: cashier.id,
     customerId: input.customerId,
-    paymentChannel: input.paymentChannel,
     paymentMethod: input.paymentMethod,
     subtotal,
     discountAmount: round2(input.billDiscountAmount + lines.reduce((sum, l) => sum + l.discountAmount, 0)),

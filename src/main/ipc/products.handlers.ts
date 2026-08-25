@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { IPC } from '@shared/types/ipc-contract'
 import { requirePermission } from '../permissions'
 import { recordAuditLog } from '../db/repositories/auditLog.repo'
-import { listCategories } from '../db/repositories/categories.repo'
+import { createCategory, listCategories, updateCategory } from '../db/repositories/categories.repo'
 import {
   createProduct,
   deactivateProduct,
@@ -37,6 +37,13 @@ const newProductSchema = z.object({
 })
 
 const updateProductSchema = newProductSchema.partial().extend({ id: z.number() })
+
+const newCategorySchema = z.object({
+  name: z.string().min(1),
+  appliesTo: z.enum(['jewelry', 'gift', 'both'])
+})
+
+const updateCategorySchema = newCategorySchema.extend({ id: z.number() })
 
 export function registerProductHandlers(): void {
   ipcMain.handle(IPC.PRODUCTS_LIST, (_event, filter) => {
@@ -96,5 +103,33 @@ export function registerProductHandlers(): void {
   ipcMain.handle(IPC.CATEGORIES_LIST, () => {
     requirePermission('products.read')
     return listCategories()
+  })
+
+  ipcMain.handle(IPC.CATEGORIES_CREATE, (_event, payload) => {
+    const user = requirePermission('products.write')
+    const input = newCategorySchema.parse(payload)
+    const category = createCategory(input)
+    recordAuditLog({
+      userId: user.id,
+      action: 'categories.create',
+      tableName: 'categories',
+      recordId: category.id,
+      details: { name: category.name }
+    })
+    return category
+  })
+
+  ipcMain.handle(IPC.CATEGORIES_UPDATE, (_event, payload) => {
+    const user = requirePermission('products.write')
+    const input = updateCategorySchema.parse(payload)
+    const category = updateCategory(input)
+    recordAuditLog({
+      userId: user.id,
+      action: 'categories.update',
+      tableName: 'categories',
+      recordId: category.id,
+      details: { name: category.name }
+    })
+    return category
   })
 }

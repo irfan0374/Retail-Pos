@@ -18,7 +18,9 @@ const api: IpcApi = {
     getBarcodeImage: (barcode) => ipcRenderer.invoke(IPC.PRODUCTS_GET_BARCODE_IMAGE, barcode)
   },
   categories: {
-    list: () => ipcRenderer.invoke(IPC.CATEGORIES_LIST)
+    list: () => ipcRenderer.invoke(IPC.CATEGORIES_LIST),
+    create: (input) => ipcRenderer.invoke(IPC.CATEGORIES_CREATE, input),
+    update: (input) => ipcRenderer.invoke(IPC.CATEGORIES_UPDATE, input)
   },
   metalRates: {
     listLatest: () => ipcRenderer.invoke(IPC.METAL_RATES_LIST_LATEST),
