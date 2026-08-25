@@ -8,6 +8,7 @@ import {
   createProduct,
   deactivateProduct,
   findProductByBarcode,
+  findProductBySku,
   listProducts,
   searchProducts,
   updateProduct
@@ -93,6 +94,11 @@ export function registerProductHandlers(): void {
     const user = requirePermission('products.write')
     deactivateProduct(Number(id))
     recordAuditLog({ userId: user.id, action: 'products.deactivate', tableName: 'products', recordId: Number(id) })
+  })
+
+  ipcMain.handle(IPC.PRODUCTS_FIND_BY_SKU, (_event, sku) => {
+    requirePermission('products.read')
+    return findProductBySku(String(sku))
   })
 
   ipcMain.handle(IPC.PRODUCTS_GET_BARCODE_IMAGE, (_event, barcode) => {

@@ -98,6 +98,11 @@ export function findProductById(id: number): Product | null {
   return row ? toProduct(row) : null
 }
 
+export function findProductBySku(sku: string): Product | null {
+  const row = getDb().prepare('SELECT * FROM products WHERE sku = ?').get(sku) as ProductRow | undefined
+  return row ? toProduct(row) : null
+}
+
 function nextBarcode(): string {
   const db = getDb()
   const { seq } = db

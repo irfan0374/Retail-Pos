@@ -106,6 +106,26 @@ function getSaleWithItems(db: Database.Database, saleId: number): SaleWithItems 
   return { ...toSale(saleRow), items: itemRows.map(toSaleItem) }
 }
 
+export function findSaleByInvoiceNo(invoiceNo: string): Sale | null {
+  const row = getDb().prepare('SELECT * FROM sales WHERE invoice_no = ?').get(invoiceNo) as
+    | SaleRow
+    | undefined
+  return row ? toSale(row) : null
+}
+
+export function getSaleWithItemsById(id: number): SaleWithItems | null {
+  const row = getDb().prepare('SELECT * FROM sales WHERE id = ?').get(id) as SaleRow | undefined
+  if (!row) return null
+  return getSaleWithItems(getDb(), id)
+}
+
+export function findSaleItemById(id: number): SaleItem | null {
+  const row = getDb().prepare('SELECT * FROM sale_items WHERE id = ?').get(id) as
+    | SaleItemRow
+    | undefined
+  return row ? toSaleItem(row) : null
+}
+
 export function finalizeSale(params: FinalizeSaleParams): SaleWithItems {
   const db = getDb()
   const run = db.transaction((): SaleWithItems => {

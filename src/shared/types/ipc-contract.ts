@@ -21,6 +21,8 @@ import type {
 } from './purchase'
 import type { ExportResult, MonthlySalesSummary, SalesHistoryFilter, VatSummary, ZReport } from './report'
 import type { ShopSettings } from './settings'
+import type { HeldSale, HeldSaleWithItems, NewHeldSaleInput } from './heldSale'
+import type { CreditNote, CreditNoteWithItems, NewCreditNoteInput } from './creditNote'
 
 export const IPC = {
   AUTH_LOGIN: 'auth:login',
@@ -34,6 +36,7 @@ export const IPC = {
   PRODUCTS_UPDATE: 'products:update',
   PRODUCTS_DEACTIVATE: 'products:deactivate',
   PRODUCTS_GET_BARCODE_IMAGE: 'products:getBarcodeImage',
+  PRODUCTS_FIND_BY_SKU: 'products:findBySku',
 
   CATEGORIES_LIST: 'categories:list',
   CATEGORIES_CREATE: 'categories:create',
@@ -46,6 +49,16 @@ export const IPC = {
   CUSTOMERS_CREATE: 'customers:create',
 
   SALES_FINALIZE: 'sales:finalize',
+  SALES_FIND_BY_INVOICE: 'sales:findByInvoice',
+  SALES_OPEN_DRAWER: 'sales:openDrawer',
+
+  HELD_SALES_LIST: 'heldSales:list',
+  HELD_SALES_GET: 'heldSales:get',
+  HELD_SALES_CREATE: 'heldSales:create',
+  HELD_SALES_DELETE: 'heldSales:delete',
+
+  CREDIT_NOTES_LIST: 'creditNotes:list',
+  CREDIT_NOTES_CREATE: 'creditNotes:create',
 
   SUPPLIERS_LIST: 'suppliers:list',
   SUPPLIERS_SEARCH: 'suppliers:search',
@@ -110,6 +123,7 @@ export interface IpcApi {
     list(filter?: { type?: Product['type']; activeOnly?: boolean }): Promise<Product[]>
     search(query: string): Promise<Product[]>
     findByBarcode(barcode: string): Promise<Product | null>
+    findBySku(sku: string): Promise<Product | null>
     create(input: NewProductInput): Promise<Product>
     update(input: UpdateProductInput): Promise<Product>
     deactivate(id: number): Promise<void>
@@ -130,6 +144,18 @@ export interface IpcApi {
   }
   sales: {
     finalize(input: FinalizeSaleInput): Promise<SaleWithItems>
+    findByInvoice(invoiceNo: string): Promise<SaleWithItems | null>
+    openDrawer(): Promise<void>
+  }
+  heldSales: {
+    list(): Promise<HeldSale[]>
+    get(id: number): Promise<HeldSaleWithItems | null>
+    create(input: NewHeldSaleInput): Promise<HeldSale>
+    delete(id: number): Promise<void>
+  }
+  creditNotes: {
+    list(filter?: { saleId?: number }): Promise<CreditNote[]>
+    create(input: NewCreditNoteInput): Promise<CreditNoteWithItems>
   }
   suppliers: {
     list(): Promise<Supplier[]>

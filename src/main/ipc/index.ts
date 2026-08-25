@@ -7,6 +7,8 @@ import { registerSupplierHandlers } from './suppliers.handlers'
 import { registerPurchaseHandlers } from './purchases.handlers'
 import { registerReportHandlers } from './reports.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
+import { registerHeldSaleHandlers } from './heldSales.handlers'
+import { registerCreditNoteHandlers } from './creditNotes.handlers'
 
 export function registerIpcHandlers(): void {
   registerAuthHandlers()
@@ -18,4 +20,6 @@ export function registerIpcHandlers(): void {
   registerPurchaseHandlers()
   registerReportHandlers()
   registerSettingsHandlers()
+  registerHeldSaleHandlers()
+  registerCreditNoteHandlers()
 }

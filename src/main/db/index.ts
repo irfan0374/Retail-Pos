@@ -2,7 +2,11 @@ import { app } from 'electron'
 import { join } from 'node:path'
 import Database from 'better-sqlite3'
 import { runMigrations } from './migrate'
-import { seedAppSettingsIfEmpty, seedDefaultAdminIfEmpty } from './seed'
+import {
+  seedAppSettingsIfEmpty,
+  seedDefaultAdminIfEmpty,
+  seedExchangePlaceholderProductIfMissing
+} from './seed'
 
 let db: Database.Database | null = null
 
@@ -17,6 +21,7 @@ export function initDatabase(): Database.Database {
   runMigrations(db)
   seedDefaultAdminIfEmpty(db)
   seedAppSettingsIfEmpty(db)
+  seedExchangePlaceholderProductIfMissing(db)
 
   return db
 }

@@ -6,7 +6,12 @@ import { calculateLineTotals, impliedDiscountPct, round2 } from '@shared/pricing
 import { requireSession, verifyManagerCredentials } from '../services/auth.service'
 import { resolveUnitPrice } from '../services/pricing.service'
 import { findProductById } from '../db/repositories/products.repo'
-import { finalizeSale, type FinalizeSaleLine } from '../db/repositories/sales.repo'
+import {
+  finalizeSale,
+  findSaleByInvoiceNo,
+  getSaleWithItemsById,
+  type FinalizeSaleLine
+} from '../db/repositories/sales.repo'
 import { recordAuditLog } from '../db/repositories/auditLog.repo'
 import { getPrinter } from '../services/printer.service'
 import type { SafeUser } from '@shared/types/user'
@@ -21,9 +26,12 @@ const finalizeSchema = z.object({
       z.object({
         productId: z.number(),
         qty: z.number().positive(),
-        unitPrice: z.number().nonnegative(),
+        // Negative for an old-gold exchange credit line; never negative for a real product line
+        // (a cashier trying to sell at a negative price is caught by the discount-limit check below).
+        unitPrice: z.number(),
         discountAmount: z.number().nonnegative(),
-        isExchangeItem: z.boolean().optional()
+        isExchangeItem: z.boolean().optional(),
+        description: z.string().optional()
       })
     )
     .min(1),
@@ -52,10 +60,15 @@ export async function finalizeSaleWithChecks(
       if (pct > CASHIER_MAX_DISCOUNT_PCT) discountExceedsLimit = true
     }
 
-    const { vatAmount, lineTotal } = calculateLineTotals(item.unitPrice, item.qty, item.discountAmount)
+    // Old-gold buy-back is the shop purchasing from an individual, not a taxable supply —
+    // it never carries output VAT, regardless of the flat-VAT rule applied to real sale lines.
+    const { vatAmount, lineTotal } = item.isExchangeItem
+      ? { vatAmount: 0, lineTotal: round2(item.unitPrice * item.qty - item.discountAmount) }
+      : calculateLineTotals(item.unitPrice, item.qty, item.discountAmount)
+
     return {
       productId: product.id,
-      description: product.name,
+      description: item.isExchangeItem && item.description ? item.description : product.name,
       qty: item.qty,
       unitPrice: item.unitPrice,
       discountAmount: item.discountAmount,
@@ -103,7 +116,10 @@ export async function finalizeSaleWithChecks(
     items: lines
   })
 
-  await getPrinter().printReceipt(sale)
+  const printer = getPrinter()
+  await printer.printReceipt(sale)
+  if (input.paymentMethod === 'cash') await printer.openDrawer()
+
   return sale
 }
 
@@ -112,5 +128,16 @@ export function registerSalesHandlers(): void {
     const cashier = requireSession()
     const input = finalizeSchema.parse(payload)
     return finalizeSaleWithChecks(cashier, input)
+  })
+
+  ipcMain.handle(IPC.SALES_FIND_BY_INVOICE, (_event, invoiceNo) => {
+    requireSession()
+    const sale = findSaleByInvoiceNo(z.string().min(1).parse(invoiceNo))
+    return sale ? getSaleWithItemsById(sale.id) : null
+  })
+
+  ipcMain.handle(IPC.SALES_OPEN_DRAWER, async () => {
+    requireSession()
+    await getPrinter().openDrawer()
   })
 }

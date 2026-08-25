@@ -70,7 +70,7 @@ export interface PurchaseReturnWithItems extends PurchaseReturn {
   items: PurchaseReturnItem[]
 }
 
-export type StockMovementType = 'purchase' | 'purchase_return' | 'sale'
+export type StockMovementType = 'purchase' | 'purchase_return' | 'sale' | 'sale_return'
 
 export interface StockMovement {
   id: number

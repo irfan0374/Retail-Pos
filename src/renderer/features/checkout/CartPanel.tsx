@@ -32,8 +32,15 @@ export function CartPanel() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {lines.map((line) => (
-                <tr key={line.key}>
-                  <td className="px-4 py-2">{line.product.name}</td>
+                <tr key={line.key} className={line.isExchangeItem ? 'bg-amber-50' : undefined}>
+                  <td className="px-4 py-2">
+                    {line.description ?? line.product.name}
+                    {line.isExchangeItem && (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        {t('checkout.exchangeCredit')}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-2 py-2">
                     <input
                       type="number"

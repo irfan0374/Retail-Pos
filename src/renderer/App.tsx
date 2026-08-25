@@ -6,6 +6,7 @@ import { CheckoutScreen } from './features/checkout/CheckoutScreen'
 import { ProductListScreen } from './features/products/ProductListScreen'
 import { MetalRateScreen } from './features/metal-rates/MetalRateScreen'
 import { PurchasesScreen } from './features/purchases/PurchasesScreen'
+import { ReturnsScreen } from './features/returns/ReturnsScreen'
 import { ReportsScreen } from './features/reports/ReportsScreen'
 import { ShopSettingsScreen } from './features/settings/ShopSettingsScreen'
 
@@ -26,6 +27,7 @@ export default function App() {
       {screen === 'products' && <ProductListScreen />}
       {screen === 'metalRates' && <MetalRateScreen />}
       {screen === 'purchases' && <PurchasesScreen />}
+      {screen === 'returns' && <ReturnsScreen />}
       {screen === 'reports' && <ReportsScreen />}
       {screen === 'settings' && <ShopSettingsScreen />}
     </AppShell>

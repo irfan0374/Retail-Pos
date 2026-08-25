@@ -15,6 +15,7 @@
     "products": "Products",
     "metalRates": "Metal Rates",
     "purchases": "Purchases",
+    "returns": "Returns",
     "reports": "Reports",
     "settings": "Settings"
   },
@@ -89,7 +90,19 @@
     "managerUsername": "Manager Username",
     "managerPassword": "Manager Password",
     "approve": "Approve",
-    "receipt": "Receipt"
+    "receipt": "Receipt",
+    "holdSale": "Hold Sale",
+    "holdNote": "Note (optional)",
+    "resumeSale": "Resume Sale",
+    "noHeldSales": "No held sales",
+    "oldGoldExchange": "Old Gold Exchange",
+    "exchangeCredit": "Exchange Credit",
+    "metalDescription": "Metal Description",
+    "weightGrams": "Weight (g)",
+    "ratePerGram": "Rate per Gram (AED)",
+    "creditAmount": "Credit Amount",
+    "addExchangeCredit": "Add Credit to Cart",
+    "openDrawer": "Open Drawer"
   },
   "purchases": {
     "title": "Purchases",
@@ -122,7 +135,8 @@
     "allProducts": "All Products",
     "typePurchase": "Purchase",
     "typePurchaseReturn": "Purchase Return",
-    "typeSale": "Sale"
+    "typeSale": "Sale",
+    "typeSaleReturn": "Sale Return"
   },
   "suppliers": {
     "title": "Suppliers",
@@ -186,5 +200,16 @@
     "trn": "Tax Registration Number (TRN)",
     "save": "Save Settings",
     "saved": "Settings saved"
+  },
+  "returns": {
+    "title": "Returns & Exchanges",
+    "invoiceNo": "Invoice Number",
+    "search": "Search",
+    "returnQty": "Return Qty",
+    "notReturnable": "not returnable",
+    "reason": "Reason",
+    "issueCreditNote": "Issue Credit Note",
+    "creditNoteIssued": "Credit note issued",
+    "creditTotal": "Total credited"
   }
 }

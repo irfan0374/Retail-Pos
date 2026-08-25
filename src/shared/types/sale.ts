@@ -4,10 +4,14 @@ export type SaleStatus = 'completed' | 'void' | 'held'
 export interface CartLineInput {
   productId: number
   qty: number
-  /** Price the cashier is charging per unit — may differ from the product's stored selling price. */
+  /** Price the cashier is charging per unit — may differ from the product's stored selling price.
+   *  Negative for an old-gold exchange credit line. */
   unitPrice: number
   discountAmount: number
   isExchangeItem?: boolean
+  /** Free-text line description — required for exchange items (e.g. "Old Gold 22K 10.5g @ 220/g"),
+   *  since they don't have a meaningful catalog product name. Ignored for normal lines. */
+  description?: string
 }
 
 export interface ManagerOverride {

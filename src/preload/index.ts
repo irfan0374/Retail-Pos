@@ -12,6 +12,7 @@ const api: IpcApi = {
     list: (filter) => ipcRenderer.invoke(IPC.PRODUCTS_LIST, filter),
     search: (query) => ipcRenderer.invoke(IPC.PRODUCTS_SEARCH, query),
     findByBarcode: (barcode) => ipcRenderer.invoke(IPC.PRODUCTS_FIND_BY_BARCODE, barcode),
+    findBySku: (sku) => ipcRenderer.invoke(IPC.PRODUCTS_FIND_BY_SKU, sku),
     create: (input) => ipcRenderer.invoke(IPC.PRODUCTS_CREATE, input),
     update: (input) => ipcRenderer.invoke(IPC.PRODUCTS_UPDATE, input),
     deactivate: (id) => ipcRenderer.invoke(IPC.PRODUCTS_DEACTIVATE, id),
@@ -31,7 +32,19 @@ const api: IpcApi = {
     create: (input) => ipcRenderer.invoke(IPC.CUSTOMERS_CREATE, input)
   },
   sales: {
-    finalize: (input) => ipcRenderer.invoke(IPC.SALES_FINALIZE, input)
+    finalize: (input) => ipcRenderer.invoke(IPC.SALES_FINALIZE, input),
+    findByInvoice: (invoiceNo) => ipcRenderer.invoke(IPC.SALES_FIND_BY_INVOICE, invoiceNo),
+    openDrawer: () => ipcRenderer.invoke(IPC.SALES_OPEN_DRAWER)
+  },
+  heldSales: {
+    list: () => ipcRenderer.invoke(IPC.HELD_SALES_LIST),
+    get: (id) => ipcRenderer.invoke(IPC.HELD_SALES_GET, id),
+    create: (input) => ipcRenderer.invoke(IPC.HELD_SALES_CREATE, input),
+    delete: (id) => ipcRenderer.invoke(IPC.HELD_SALES_DELETE, id)
+  },
+  creditNotes: {
+    list: (filter) => ipcRenderer.invoke(IPC.CREDIT_NOTES_LIST, filter),
+    create: (input) => ipcRenderer.invoke(IPC.CREDIT_NOTES_CREATE, input)
   },
   suppliers: {
     list: () => ipcRenderer.invoke(IPC.SUPPLIERS_LIST),
