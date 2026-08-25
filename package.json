@@ -17,6 +17,7 @@
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
     "bwip-js": "^4.11.4",
+    "exceljs": "^4.4.0",
     "i18next": "^26.4.0",
     "node-thermal-printer": "^4.6.1",
     "react": "^19.2.8",

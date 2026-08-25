@@ -14,7 +14,9 @@
     "checkout": "Checkout",
     "products": "Products",
     "metalRates": "Metal Rates",
-    "purchases": "Purchases"
+    "purchases": "Purchases",
+    "reports": "Reports",
+    "settings": "Settings"
   },
   "products": {
     "title": "Products",
@@ -140,5 +142,49 @@
     "note": "Note (optional)",
     "paymentHistory": "Payment History",
     "noPayments": "No payments recorded"
+  },
+  "reports": {
+    "title": "Reports",
+    "tabHistory": "Sales History",
+    "tabMonthly": "Monthly Summary",
+    "tabVat": "VAT Report",
+    "tabZReport": "Z-Report",
+    "tabPurchaseRegister": "Purchase Register",
+    "dateFrom": "From",
+    "dateTo": "To",
+    "cashier": "Cashier",
+    "allCashiers": "All Cashiers",
+    "paymentMethod": "Payment Method",
+    "allMethods": "All Methods",
+    "product": "Product",
+    "allProducts": "All Products",
+    "filter": "Filter",
+    "invoiceNo": "Invoice No",
+    "date": "Date",
+    "total": "Total",
+    "noSales": "No sales found",
+    "month": "Month",
+    "salesCount": "Sales Count",
+    "subtotal": "Subtotal",
+    "discountAmount": "Discount",
+    "vatAmount": "VAT",
+    "exportExcel": "Export to Excel",
+    "exportSuccess": "Exported to {{path}}",
+    "exportCancelled": "Export cancelled",
+    "period": "Period",
+    "taxableAmount": "Taxable Amount",
+    "totalAmount": "Total Amount",
+    "selectDate": "Select Date",
+    "byPaymentMethod": "By Payment Method",
+    "expectedCash": "Expected Cash",
+    "actualCash": "Actual Cash Counted",
+    "variance": "Variance"
+  },
+  "settings": {
+    "title": "Shop Settings",
+    "shopName": "Shop Name",
+    "trn": "Tax Registration Number (TRN)",
+    "save": "Save Settings",
+    "saved": "Settings saved"
   }
 }

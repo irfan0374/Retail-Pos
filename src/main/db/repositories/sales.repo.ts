@@ -3,7 +3,15 @@ import { getDb } from '../index'
 import { decrementStock } from './products.repo'
 import { recordAuditLog } from './auditLog.repo'
 import { recordStockMovement } from './stockMovements.repo'
+import { round2 } from '@shared/pricing'
 import type { PaymentMethod, Sale, SaleItem, SaleWithItems } from '@shared/types/sale'
+import type {
+  MonthlySalesSummary,
+  PaymentMethodBreakdown,
+  SalesHistoryFilter,
+  VatSummary,
+  ZReport
+} from '@shared/types/report'
 
 interface SaleRow {
   id: number
@@ -173,4 +181,144 @@ export function finalizeSale(params: FinalizeSaleParams): SaleWithItems {
     return getSaleWithItems(db, saleId)
   })
   return run()
+}
+
+export function searchSales(filter: SalesHistoryFilter): Sale[] {
+  const db = getDb()
+  const clauses: string[] = []
+  const params: unknown[] = []
+
+  if (filter.dateFrom) {
+    clauses.push('date(s.created_at) >= date(?)')
+    params.push(filter.dateFrom)
+  }
+  if (filter.dateTo) {
+    clauses.push('date(s.created_at) <= date(?)')
+    params.push(filter.dateTo)
+  }
+  if (filter.cashierId) {
+    clauses.push('s.cashier_id = ?')
+    params.push(filter.cashierId)
+  }
+  if (filter.paymentMethod) {
+    clauses.push('s.payment_method = ?')
+    params.push(filter.paymentMethod)
+  }
+  if (filter.productId) {
+    clauses.push('EXISTS (SELECT 1 FROM sale_items si WHERE si.sale_id = s.id AND si.product_id = ?)')
+    params.push(filter.productId)
+  }
+
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
+  const rows = db
+    .prepare(`SELECT s.* FROM sales s ${where} ORDER BY s.id DESC LIMIT 500`)
+    .all(...params) as SaleRow[]
+  return rows.map(toSale)
+}
+
+export function listSalesWithItemsInRange(dateFrom: string, dateTo: string): SaleWithItems[] {
+  const db = getDb()
+  const salesRows = db
+    .prepare(
+      `SELECT * FROM sales WHERE status != 'void' AND date(created_at) BETWEEN date(?) AND date(?) ORDER BY id`
+    )
+    .all(dateFrom, dateTo) as SaleRow[]
+  return salesRows.map((row) => {
+    const itemRows = db.prepare('SELECT * FROM sale_items WHERE sale_id = ?').all(row.id) as SaleItemRow[]
+    return { ...toSale(row), items: itemRows.map(toSaleItem) }
+  })
+}
+
+export function getMonthlySummary(): MonthlySalesSummary[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT strftime('%Y-%m', created_at) AS month,
+              COUNT(*) AS salesCount,
+              COALESCE(SUM(subtotal), 0) AS subtotal,
+              COALESCE(SUM(discount_amount), 0) AS discountAmount,
+              COALESCE(SUM(vat_amount), 0) AS vatAmount,
+              COALESCE(SUM(total), 0) AS total
+       FROM sales
+       WHERE status != 'void'
+       GROUP BY month
+       ORDER BY month DESC`
+    )
+    .all() as MonthlySalesSummary[]
+  return rows.map((r) => ({
+    month: r.month,
+    salesCount: r.salesCount,
+    subtotal: round2(r.subtotal),
+    discountAmount: round2(r.discountAmount),
+    vatAmount: round2(r.vatAmount),
+    total: round2(r.total)
+  }))
+}
+
+export function getVatSummary(dateFrom: string, dateTo: string): VatSummary {
+  const row = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS salesCount,
+              COALESCE(SUM(subtotal - discount_amount), 0) AS taxableAmount,
+              COALESCE(SUM(vat_amount), 0) AS vatAmount,
+              COALESCE(SUM(total), 0) AS totalAmount
+       FROM sales
+       WHERE status != 'void' AND date(created_at) BETWEEN date(?) AND date(?)`
+    )
+    .get(dateFrom, dateTo) as {
+    salesCount: number
+    taxableAmount: number
+    vatAmount: number
+    totalAmount: number
+  }
+  return {
+    dateFrom,
+    dateTo,
+    salesCount: row.salesCount,
+    taxableAmount: round2(row.taxableAmount),
+    vatAmount: round2(row.vatAmount),
+    totalAmount: round2(row.totalAmount)
+  }
+}
+
+export function getZReport(date: string): ZReport {
+  const db = getDb()
+  const totals = db
+    .prepare(
+      `SELECT COUNT(*) AS salesCount,
+              COALESCE(SUM(subtotal), 0) AS subtotal,
+              COALESCE(SUM(discount_amount), 0) AS discountAmount,
+              COALESCE(SUM(vat_amount), 0) AS vatAmount,
+              COALESCE(SUM(total), 0) AS total
+       FROM sales
+       WHERE status != 'void' AND date(created_at) = date(?)`
+    )
+    .get(date) as {
+    salesCount: number
+    subtotal: number
+    discountAmount: number
+    vatAmount: number
+    total: number
+  }
+
+  const byMethodRows = db
+    .prepare(
+      `SELECT payment_method AS method, COUNT(*) AS count, COALESCE(SUM(total), 0) AS total
+       FROM sales
+       WHERE status != 'void' AND date(created_at) = date(?)
+       GROUP BY payment_method`
+    )
+    .all(date) as PaymentMethodBreakdown[]
+
+  const expectedCash = byMethodRows.find((m) => m.method === 'cash')?.total ?? 0
+
+  return {
+    date,
+    salesCount: totals.salesCount,
+    subtotal: round2(totals.subtotal),
+    discountAmount: round2(totals.discountAmount),
+    vatAmount: round2(totals.vatAmount),
+    total: round2(totals.total),
+    byPaymentMethod: byMethodRows.map((m) => ({ method: m.method, count: m.count, total: round2(m.total) })),
+    expectedCash: round2(expectedCash)
+  }
 }

@@ -17,6 +17,7 @@ export type Permission =
   | 'sales.void'
   | 'reports.financial'
   | 'users.manage'
+  | 'settings.write'
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   admin: [
@@ -29,7 +30,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'sales.overridePrice',
     'sales.void',
     'reports.financial',
-    'users.manage'
+    'users.manage',
+    'settings.write'
   ],
   manager: [
     'products.read',

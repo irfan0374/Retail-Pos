@@ -1,18 +1,29 @@
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Modal } from '../../components/Modal'
 import { formatAed } from '../../lib/format'
 import type { SaleWithItems } from '@shared/types/sale'
+import type { ShopSettings } from '@shared/types/settings'
 
 export function ReceiptPreview({ sale, onClose }: { sale: SaleWithItems; onClose: () => void }) {
   const { t } = useTranslation()
+  const [settings, setSettings] = useState<ShopSettings | null>(null)
+
+  useEffect(() => {
+    void window.api.settings.get().then(setSettings)
+  }, [])
 
   return (
     <Modal title={`${t('checkout.receipt')} — ${sale.invoiceNo}`} onClose={onClose}>
       <div className="space-y-1 text-sm">
+        {settings?.shopName && <p className="font-semibold">{settings.shopName}</p>}
+        {settings?.trn && <p className="text-xs text-slate-500">TRN: {settings.trn}</p>}
+        <div className="my-2 border-t border-dashed border-slate-300" />
         {sale.items.map((item) => (
           <div key={item.id} className="flex justify-between">
             <span>
               {item.description} × {item.qty}
+              <span className="ml-1 text-xs text-slate-400">(VAT {formatAed(item.vatAmount)})</span>
             </span>
             <span>{formatAed(item.lineTotal)}</span>
           </div>

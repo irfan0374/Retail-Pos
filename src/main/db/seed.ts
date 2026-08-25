@@ -21,3 +21,10 @@ export function seedDefaultAdminIfEmpty(db: Database.Database): void {
     `[seed] Created default admin user — username: "${DEFAULT_ADMIN_USERNAME}", password: "${DEFAULT_ADMIN_PASSWORD}". Change this after first login.`
   )
 }
+
+/** Ensures the singleton app_settings row (id=1) always exists so reads never need a null check. */
+export function seedAppSettingsIfEmpty(db: Database.Database): void {
+  const row = db.prepare('SELECT id FROM app_settings WHERE id = 1').get()
+  if (row) return
+  db.prepare(`INSERT INTO app_settings (id, shop_name, trn) VALUES (1, '', '')`).run()
+}

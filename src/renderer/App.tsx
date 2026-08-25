@@ -6,6 +6,8 @@ import { CheckoutScreen } from './features/checkout/CheckoutScreen'
 import { ProductListScreen } from './features/products/ProductListScreen'
 import { MetalRateScreen } from './features/metal-rates/MetalRateScreen'
 import { PurchasesScreen } from './features/purchases/PurchasesScreen'
+import { ReportsScreen } from './features/reports/ReportsScreen'
+import { ShopSettingsScreen } from './features/settings/ShopSettingsScreen'
 
 export default function App() {
   const { user, status, refresh } = useAuthStore()
@@ -24,6 +26,8 @@ export default function App() {
       {screen === 'products' && <ProductListScreen />}
       {screen === 'metalRates' && <MetalRateScreen />}
       {screen === 'purchases' && <PurchasesScreen />}
+      {screen === 'reports' && <ReportsScreen />}
+      {screen === 'settings' && <ShopSettingsScreen />}
     </AppShell>
   )
 }

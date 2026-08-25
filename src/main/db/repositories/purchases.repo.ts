@@ -111,6 +111,19 @@ export function listPurchases(filter?: { supplierId?: number }): Purchase[] {
   return rows.map(toPurchase)
 }
 
+export function listPurchasesWithItemsInRange(dateFrom: string, dateTo: string): PurchaseWithItems[] {
+  const db = getDb()
+  const rows = db
+    .prepare('SELECT * FROM purchases WHERE date(date) BETWEEN date(?) AND date(?) ORDER BY id')
+    .all(dateFrom, dateTo) as PurchaseRow[]
+  return rows.map((row) => {
+    const itemRows = db
+      .prepare('SELECT * FROM purchase_items WHERE purchase_id = ?')
+      .all(row.id) as PurchaseItemRow[]
+    return { ...toPurchase(row), items: itemRows.map(toPurchaseItem) }
+  })
+}
+
 export function getPurchaseWithItems(id: number): PurchaseWithItems | null {
   const db = getDb()
   const row = db.prepare('SELECT * FROM purchases WHERE id = ?').get(id) as PurchaseRow | undefined

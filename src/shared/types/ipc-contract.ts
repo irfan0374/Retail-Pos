@@ -1,7 +1,7 @@
 import type { SafeUser } from './user'
 import type { Category, MetalRate, NewProductInput, Product, UpdateProductInput } from './product'
 import type { Customer, NewCustomerInput } from './customer'
-import type { FinalizeSaleInput, SaleWithItems } from './sale'
+import type { FinalizeSaleInput, Sale, SaleWithItems } from './sale'
 import type {
   NewSupplierInput,
   NewSupplierPaymentInput,
@@ -19,6 +19,8 @@ import type {
   PurchaseWithItems,
   StockMovement
 } from './purchase'
+import type { ExportResult, MonthlySalesSummary, SalesHistoryFilter, VatSummary, ZReport } from './report'
+import type { ShopSettings } from './settings'
 
 export const IPC = {
   AUTH_LOGIN: 'auth:login',
@@ -59,7 +61,19 @@ export const IPC = {
   PURCHASE_RETURNS_LIST: 'purchaseReturns:list',
   PURCHASE_RETURNS_CREATE: 'purchaseReturns:create',
 
-  STOCK_MOVEMENTS_LIST: 'stockMovements:list'
+  STOCK_MOVEMENTS_LIST: 'stockMovements:list',
+
+  REPORTS_SALES_HISTORY: 'reports:salesHistory',
+  REPORTS_USERS_LIST: 'reports:usersList',
+  REPORTS_MONTHLY_SUMMARY: 'reports:monthlySummary',
+  REPORTS_VAT_SUMMARY: 'reports:vatSummary',
+  REPORTS_Z_REPORT: 'reports:zReport',
+  REPORTS_EXPORT_SALES_REGISTER: 'reports:exportSalesRegister',
+  REPORTS_EXPORT_VAT_REPORT: 'reports:exportVatReport',
+  REPORTS_EXPORT_PURCHASE_REGISTER: 'reports:exportPurchaseRegister',
+
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_UPDATE: 'settings:update'
 } as const
 
 export interface LoginRequest {
@@ -133,5 +147,19 @@ export interface IpcApi {
     listReturns(filter?: { purchaseId?: number }): Promise<PurchaseReturn[]>
     createReturn(input: NewPurchaseReturnInput): Promise<PurchaseReturnWithItems>
     listStockMovements(filter?: { productId?: number }): Promise<StockMovement[]>
+  }
+  reports: {
+    salesHistory(filter: SalesHistoryFilter): Promise<Sale[]>
+    usersList(): Promise<SafeUser[]>
+    monthlySummary(): Promise<MonthlySalesSummary[]>
+    vatSummary(dateFrom: string, dateTo: string): Promise<VatSummary>
+    zReport(date: string): Promise<ZReport>
+    exportSalesRegister(dateFrom: string, dateTo: string): Promise<ExportResult>
+    exportVatReport(dateFrom: string, dateTo: string): Promise<ExportResult>
+    exportPurchaseRegister(dateFrom: string, dateTo: string): Promise<ExportResult>
+  }
+  settings: {
+    get(): Promise<ShopSettings>
+    update(input: ShopSettings): Promise<ShopSettings>
   }
 }

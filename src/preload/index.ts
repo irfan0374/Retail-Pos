@@ -49,6 +49,22 @@ const api: IpcApi = {
     listReturns: (filter) => ipcRenderer.invoke(IPC.PURCHASE_RETURNS_LIST, filter),
     createReturn: (input) => ipcRenderer.invoke(IPC.PURCHASE_RETURNS_CREATE, input),
     listStockMovements: (filter) => ipcRenderer.invoke(IPC.STOCK_MOVEMENTS_LIST, filter)
+  },
+  reports: {
+    salesHistory: (filter) => ipcRenderer.invoke(IPC.REPORTS_SALES_HISTORY, filter),
+    usersList: () => ipcRenderer.invoke(IPC.REPORTS_USERS_LIST),
+    monthlySummary: () => ipcRenderer.invoke(IPC.REPORTS_MONTHLY_SUMMARY),
+    vatSummary: (dateFrom, dateTo) => ipcRenderer.invoke(IPC.REPORTS_VAT_SUMMARY, dateFrom, dateTo),
+    zReport: (date) => ipcRenderer.invoke(IPC.REPORTS_Z_REPORT, date),
+    exportSalesRegister: (dateFrom, dateTo) =>
+      ipcRenderer.invoke(IPC.REPORTS_EXPORT_SALES_REGISTER, dateFrom, dateTo),
+    exportVatReport: (dateFrom, dateTo) => ipcRenderer.invoke(IPC.REPORTS_EXPORT_VAT_REPORT, dateFrom, dateTo),
+    exportPurchaseRegister: (dateFrom, dateTo) =>
+      ipcRenderer.invoke(IPC.REPORTS_EXPORT_PURCHASE_REGISTER, dateFrom, dateTo)
+  },
+  settings: {
+    get: () => ipcRenderer.invoke(IPC.SETTINGS_GET),
+    update: (input) => ipcRenderer.invoke(IPC.SETTINGS_UPDATE, input)
   }
 }
 
