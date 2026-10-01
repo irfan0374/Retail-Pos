@@ -21,6 +21,9 @@ export interface VatSummary {
   dateFrom: string
   dateTo: string
   salesCount: number
+  creditNoteCount: number
+  creditNoteTotal: number
+  /** Net of credit notes issued in the period. */
   taxableAmount: number
   vatAmount: number
   totalAmount: number
@@ -40,6 +43,9 @@ export interface ZReport {
   vatAmount: number
   total: number
   byPaymentMethod: PaymentMethodBreakdown[]
+  refundCount: number
+  refundTotal: number
+  /** Cash sales minus cash refunds (credit notes against cash sales) for the day. */
   expectedCash: number
 }
 

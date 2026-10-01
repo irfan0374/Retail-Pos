@@ -1,8 +1,8 @@
 import { ipcMain } from 'electron'
 import { z } from 'zod'
 import { IPC } from '@shared/types/ipc-contract'
-import { CASHIER_MAX_DISCOUNT_PCT } from '@shared/constants'
-import { calculateLineTotals, impliedDiscountPct, round2 } from '@shared/pricing'
+import { CASHIER_MAX_DISCOUNT_PCT, EXCHANGE_PLACEHOLDER_SKU } from '@shared/constants'
+import { calculateSaleTotals, round2 } from '@shared/pricing'
 import { requireSession, verifyManagerPin } from '../services/auth.service'
 import { resolveUnitPrice } from '../services/pricing.service'
 import { findProductById } from '../db/repositories/products.repo'
@@ -13,6 +13,7 @@ import {
   type FinalizeSaleLine
 } from '../db/repositories/sales.repo'
 import { recordAuditLog } from '../db/repositories/auditLog.repo'
+import { getSettings } from '../db/repositories/settings.repo'
 import { getPrinter } from '../services/printer.service'
 import type { SafeUser } from '@shared/types/user'
 import type { FinalizeSaleInput, SaleWithItems } from '@shared/types/sale'
@@ -26,8 +27,8 @@ const finalizeSchema = z.object({
       z.object({
         productId: z.number(),
         qty: z.number().positive(),
-        // Negative for an old-gold exchange credit line; never negative for a real product line
-        // (a cashier trying to sell at a negative price is caught by the discount-limit check below).
+        // Negative for an old-gold exchange credit line, non-negative for a real product line —
+        // both enforced in finalizeSaleWithChecks.
         unitPrice: z.number(),
         discountAmount: z.number().nonnegative(),
         isExchangeItem: z.boolean().optional(),
@@ -38,6 +39,11 @@ const finalizeSchema = z.object({
   managerOverride: z.object({ managerPin: z.string().regex(/^\d{4}$/) }).optional()
 })
 
+function exceedsCashierLimit(referenceAmount: number, chargedAmount: number): boolean {
+  if (referenceAmount <= 0) return false
+  return ((referenceAmount - chargedAmount) / referenceAmount) * 100 > CASHIER_MAX_DISCOUNT_PCT
+}
+
 /**
  * Server-side recomputation is the only thing that's authoritative — the renderer's
  * disabled/hidden controls are a UX nicety, never trusted here.
@@ -46,68 +52,96 @@ export async function finalizeSaleWithChecks(
   cashier: SafeUser,
   input: FinalizeSaleInput
 ): Promise<SaleWithItems> {
-  let discountExceedsLimit = false
+  const overrideReasons = new Set<'discount' | 'payout'>()
+  let totalReference = 0
+  let totalChargedBeforeBill = 0
 
-  const lines: FinalizeSaleLine[] = input.items.map((item) => {
+  const validated = input.items.map((item) => {
     const product = findProductById(item.productId)
     if (!product) throw new Error(`Product ${item.productId} not found`)
+    const isExchangeItem = !!item.isExchangeItem
+    const isPlaceholder = product.sku === EXCHANGE_PLACEHOLDER_SKU
 
-    if (!item.isExchangeItem) {
-      const referencePrice = resolveUnitPrice(product)
-      const pct = impliedDiscountPct(referencePrice, item.unitPrice)
-      if (pct > CASHIER_MAX_DISCOUNT_PCT) discountExceedsLimit = true
+    if (isExchangeItem) {
+      if (!getSettings().showOldGoldExchange) throw new Error('Old-gold exchange is disabled')
+      if (!isPlaceholder) throw new Error('Exchange lines must use the old-gold exchange product')
+      if (item.unitPrice >= 0) throw new Error('Exchange credit must be a negative amount')
+      if (item.discountAmount !== 0) throw new Error('Exchange lines cannot carry a discount')
+    } else {
+      if (isPlaceholder) throw new Error('The old-gold exchange product cannot be sold as a normal line')
+      if (item.unitPrice < 0) throw new Error(`Negative price on ${product.name}`)
+
+      const gross = item.unitPrice * item.qty
+      if (item.discountAmount > gross) throw new Error(`Discount on ${product.name} exceeds the line amount`)
+
+      // Both an edited unit price and a line discount count toward the cashier's limit.
+      const reference = resolveUnitPrice(product) * item.qty
+      const charged = gross - item.discountAmount
+      if (exceedsCashierLimit(reference, charged)) overrideReasons.add('discount')
+      totalReference += reference
+      totalChargedBeforeBill += charged
     }
 
-    // Old-gold buy-back is the shop purchasing from an individual, not a taxable supply —
-    // it never carries output VAT, regardless of the flat-VAT rule applied to real sale lines.
-    const { vatAmount, lineTotal } = item.isExchangeItem
-      ? { vatAmount: 0, lineTotal: round2(item.unitPrice * item.qty - item.discountAmount) }
-      : calculateLineTotals(item.unitPrice, item.qty, item.discountAmount)
-
-    return {
-      productId: product.id,
-      description: item.isExchangeItem && item.description ? item.description : product.name,
-      qty: item.qty,
-      unitPrice: item.unitPrice,
-      discountAmount: item.discountAmount,
-      vatAmount,
-      lineTotal,
-      isExchangeItem: !!item.isExchangeItem
-    }
+    return { item, product, isExchangeItem }
   })
 
-  const subtotal = round2(lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0))
-  const billDiscountPct = subtotal > 0 ? (input.billDiscountAmount / subtotal) * 100 : 0
-  if (billDiscountPct > CASHIER_MAX_DISCOUNT_PCT) discountExceedsLimit = true
+  if (input.billDiscountAmount > round2(totalChargedBeforeBill)) {
+    throw new Error('Bill discount exceeds the sale amount')
+  }
+  // Line and bill discounts stack, so the whole-bill check runs against everything given away.
+  if (exceedsCashierLimit(totalReference, totalChargedBeforeBill - input.billDiscountAmount)) {
+    overrideReasons.add('discount')
+  }
 
-  if (discountExceedsLimit && cashier.role === 'cashier') {
+  const totals = calculateSaleTotals(
+    validated.map(({ item, isExchangeItem }) => ({
+      unitPrice: item.unitPrice,
+      qty: item.qty,
+      discountAmount: item.discountAmount,
+      isExchangeItem
+    })),
+    input.billDiscountAmount
+  )
+  // Exchange credit larger than the purchase means cash goes out of the drawer.
+  if (totals.total < 0) overrideReasons.add('payout')
+
+  if (overrideReasons.size > 0 && cashier.role === 'cashier') {
     if (!input.managerOverride) {
-      throw new Error('Discount exceeds the cashier limit — manager override required')
+      throw new Error('Discount or payout exceeds the cashier limit — manager override required')
     }
     const manager = verifyManagerPin(input.managerOverride.managerPin)
     recordAuditLog({
       userId: cashier.id,
       action: 'checkout.discount_override',
-      details: { approvedBy: manager.id, billDiscountPct: round2(billDiscountPct) }
+      details: {
+        approvedBy: manager.id,
+        reasons: [...overrideReasons],
+        billDiscountAmount: input.billDiscountAmount,
+        total: totals.total
+      }
     })
   }
 
-  const vatAmount = round2(lines.reduce((sum, l) => sum + l.vatAmount, 0))
-  const linesTotalAfterDiscount = round2(
-    lines.reduce((sum, l) => sum + l.unitPrice * l.qty - l.discountAmount, 0)
-  )
-  const total = round2(linesTotalAfterDiscount - input.billDiscountAmount + vatAmount)
+  const lines: FinalizeSaleLine[] = validated.map(({ item, product, isExchangeItem }, i) => ({
+    productId: product.id,
+    description: isExchangeItem && item.description ? item.description : product.name,
+    qty: item.qty,
+    unitPrice: item.unitPrice,
+    // Includes this line's share of the bill discount, so credit notes refund what was paid.
+    discountAmount: totals.lines[i].discountAmount,
+    vatAmount: totals.lines[i].vatAmount,
+    lineTotal: totals.lines[i].lineTotal,
+    isExchangeItem
+  }))
 
-  // Bill-level discount is applied evenly at the sale level; individual line discounts already
-  // reduced each line's taxable amount above.
   const sale = finalizeSale({
     cashierId: cashier.id,
     customerId: input.customerId,
     paymentMethod: input.paymentMethod,
-    subtotal,
-    discountAmount: round2(input.billDiscountAmount + lines.reduce((sum, l) => sum + l.discountAmount, 0)),
-    vatAmount,
-    total,
+    subtotal: totals.subtotal,
+    discountAmount: totals.discountAmount,
+    vatAmount: totals.vatAmount,
+    total: totals.total,
     items: lines
   })
 

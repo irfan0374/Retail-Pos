@@ -32,9 +32,7 @@ const newPurchaseReturnSchema = z.object({
     .array(
       z.object({
         purchaseItemId: z.number(),
-        productId: z.number(),
-        qty: z.number().positive(),
-        unitCost: z.number().nonnegative()
+        qty: z.number().positive()
       })
     )
     .min(1)

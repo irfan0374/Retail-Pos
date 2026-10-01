@@ -13,6 +13,12 @@ import type {
   ZReport
 } from '@shared/types/report'
 
+/**
+ * `created_at` is stored as UTC (`datetime('now')`); every report buckets by the shop's local
+ * calendar day, which is what the date pickers and the business day mean.
+ */
+const LOCAL_DAY = (column: string): string => `date(${column}, 'localtime')`
+
 interface SaleRow {
   id: number
   invoice_no: string
@@ -209,11 +215,11 @@ export function searchSales(filter: SalesHistoryFilter): Sale[] {
   const params: unknown[] = []
 
   if (filter.dateFrom) {
-    clauses.push('date(s.created_at) >= date(?)')
+    clauses.push(`${LOCAL_DAY('s.created_at')} >= date(?)`)
     params.push(filter.dateFrom)
   }
   if (filter.dateTo) {
-    clauses.push('date(s.created_at) <= date(?)')
+    clauses.push(`${LOCAL_DAY('s.created_at')} <= date(?)`)
     params.push(filter.dateTo)
   }
   if (filter.cashierId) {
@@ -240,7 +246,7 @@ export function listSalesWithItemsInRange(dateFrom: string, dateTo: string): Sal
   const db = getDb()
   const salesRows = db
     .prepare(
-      `SELECT * FROM sales WHERE status != 'void' AND date(created_at) BETWEEN date(?) AND date(?) ORDER BY id`
+      `SELECT * FROM sales WHERE status != 'void' AND ${LOCAL_DAY('created_at')} BETWEEN date(?) AND date(?) ORDER BY id`
     )
     .all(dateFrom, dateTo) as SaleRow[]
   return salesRows.map((row) => {
@@ -252,7 +258,7 @@ export function listSalesWithItemsInRange(dateFrom: string, dateTo: string): Sal
 export function getMonthlySummary(): MonthlySalesSummary[] {
   const rows = getDb()
     .prepare(
-      `SELECT strftime('%Y-%m', created_at) AS month,
+      `SELECT strftime('%Y-%m', created_at, 'localtime') AS month,
               COUNT(*) AS salesCount,
               COALESCE(SUM(subtotal), 0) AS subtotal,
               COALESCE(SUM(discount_amount), 0) AS discountAmount,
@@ -274,29 +280,60 @@ export function getMonthlySummary(): MonthlySalesSummary[] {
   }))
 }
 
-export function getVatSummary(dateFrom: string, dateTo: string): VatSummary {
-  const row = getDb()
+interface CreditNoteTotals {
+  count: number
+  taxable: number
+  vat: number
+  total: number
+}
+
+function getCreditNoteTotals(dateFrom: string, dateTo: string): CreditNoteTotals {
+  return getDb()
     .prepare(
-      `SELECT COUNT(*) AS salesCount,
-              COALESCE(SUM(subtotal - discount_amount), 0) AS taxableAmount,
-              COALESCE(SUM(vat_amount), 0) AS vatAmount,
-              COALESCE(SUM(total), 0) AS totalAmount
-       FROM sales
-       WHERE status != 'void' AND date(created_at) BETWEEN date(?) AND date(?)`
+      `SELECT COUNT(*) AS count,
+              COALESCE(SUM(subtotal), 0) AS taxable,
+              COALESCE(SUM(vat_amount), 0) AS vat,
+              COALESCE(SUM(total), 0) AS total
+       FROM credit_notes
+       WHERE ${LOCAL_DAY('created_at')} BETWEEN date(?) AND date(?)`
     )
-    .get(dateFrom, dateTo) as {
-    salesCount: number
-    taxableAmount: number
-    vatAmount: number
-    totalAmount: number
-  }
+    .get(dateFrom, dateTo) as CreditNoteTotals
+}
+
+/** Net of credit notes issued in the period — refunded VAT is no longer output VAT due. */
+export function getVatSummary(dateFrom: string, dateTo: string): VatSummary {
+  const db = getDb()
+  const { salesCount } = db
+    .prepare(
+      `SELECT COUNT(*) AS salesCount FROM sales
+       WHERE status != 'void' AND ${LOCAL_DAY('created_at')} BETWEEN date(?) AND date(?)`
+    )
+    .get(dateFrom, dateTo) as { salesCount: number }
+  // Taxable supplies come from the real sale lines only — old-gold exchange credit lines are
+  // purchases from the customer, not negative supplies.
+  const sales = db
+    .prepare(
+      `SELECT COALESCE(SUM(si.line_total - si.vat_amount), 0) AS taxable,
+              COALESCE(SUM(si.vat_amount), 0) AS vat
+       FROM sale_items si
+       INNER JOIN sales s ON s.id = si.sale_id
+       WHERE s.status != 'void' AND si.is_exchange_item = 0
+         AND ${LOCAL_DAY('s.created_at')} BETWEEN date(?) AND date(?)`
+    )
+    .get(dateFrom, dateTo) as { taxable: number; vat: number }
+  const credits = getCreditNoteTotals(dateFrom, dateTo)
+
+  const taxableAmount = round2(sales.taxable - credits.taxable)
+  const vatAmount = round2(sales.vat - credits.vat)
   return {
     dateFrom,
     dateTo,
-    salesCount: row.salesCount,
-    taxableAmount: round2(row.taxableAmount),
-    vatAmount: round2(row.vatAmount),
-    totalAmount: round2(row.totalAmount)
+    salesCount,
+    creditNoteCount: credits.count,
+    creditNoteTotal: round2(credits.total),
+    taxableAmount,
+    vatAmount,
+    totalAmount: round2(taxableAmount + vatAmount)
   }
 }
 
@@ -310,7 +347,7 @@ export function getZReport(date: string): ZReport {
               COALESCE(SUM(vat_amount), 0) AS vatAmount,
               COALESCE(SUM(total), 0) AS total
        FROM sales
-       WHERE status != 'void' AND date(created_at) = date(?)`
+       WHERE status != 'void' AND ${LOCAL_DAY('created_at')} = date(?)`
     )
     .get(date) as {
     salesCount: number
@@ -324,12 +361,24 @@ export function getZReport(date: string): ZReport {
     .prepare(
       `SELECT payment_method AS method, COUNT(*) AS count, COALESCE(SUM(total), 0) AS total
        FROM sales
-       WHERE status != 'void' AND date(created_at) = date(?)
+       WHERE status != 'void' AND ${LOCAL_DAY('created_at')} = date(?)
        GROUP BY payment_method`
     )
     .all(date) as PaymentMethodBreakdown[]
 
-  const expectedCash = byMethodRows.find((m) => m.method === 'cash')?.total ?? 0
+  // Credit notes don't record a refund method, so a refund goes back the way the sale was paid.
+  const refundRows = db
+    .prepare(
+      `SELECT s.payment_method AS method, COUNT(*) AS count, COALESCE(SUM(cn.total), 0) AS total
+       FROM credit_notes cn
+       INNER JOIN sales s ON s.id = cn.sale_id
+       WHERE ${LOCAL_DAY('cn.created_at')} = date(?)
+       GROUP BY s.payment_method`
+    )
+    .all(date) as PaymentMethodBreakdown[]
+
+  const cashSales = byMethodRows.find((m) => m.method === 'cash')?.total ?? 0
+  const cashRefunds = refundRows.find((m) => m.method === 'cash')?.total ?? 0
 
   return {
     date,
@@ -339,6 +388,8 @@ export function getZReport(date: string): ZReport {
     vatAmount: round2(totals.vatAmount),
     total: round2(totals.total),
     byPaymentMethod: byMethodRows.map((m) => ({ method: m.method, count: m.count, total: round2(m.total) })),
-    expectedCash: round2(expectedCash)
+    refundCount: refundRows.reduce((sum, m) => sum + m.count, 0),
+    refundTotal: round2(refundRows.reduce((sum, m) => sum + m.total, 0)),
+    expectedCash: round2(cashSales - cashRefunds)
   }
 }

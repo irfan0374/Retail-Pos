@@ -1,6 +1,5 @@
 import { create } from 'zustand'
-import { round2 } from '@shared/pricing'
-import { VAT_RATE } from '@shared/constants'
+import { calculateSaleTotals } from '@shared/pricing'
 import type { Product } from '@shared/types/product'
 
 export interface CartLine {
@@ -91,18 +90,8 @@ export const useCartStore = create<CartState>((set, get) => ({
   clear: () => set({ lines: [], billDiscountAmount: 0 })
 }))
 
+/** Same allocation the main process uses at finalize, so the on-screen total matches the receipt. */
 export function cartTotals(lines: CartLine[], billDiscountAmount: number) {
-  const subtotal = round2(lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0))
-  const vatAmount = round2(
-    lines.reduce((sum, l) => {
-      if (l.isExchangeItem) return sum
-      const taxable = l.unitPrice * l.qty - l.discountAmount
-      return sum + taxable * VAT_RATE
-    }, 0)
-  )
-  const linesAfterDiscount = round2(
-    lines.reduce((sum, l) => sum + l.unitPrice * l.qty - l.discountAmount, 0)
-  )
-  const total = round2(linesAfterDiscount - billDiscountAmount + vatAmount)
+  const { subtotal, vatAmount, total } = calculateSaleTotals(lines, billDiscountAmount)
   return { subtotal, vatAmount, total }
 }

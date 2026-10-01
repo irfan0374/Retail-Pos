@@ -37,21 +37,60 @@ export function calculateLineVat(taxableAmount: number): number {
   return round2(taxableAmount * VAT_RATE)
 }
 
-export interface LineTotals {
-  taxableAmount: number
+export interface SaleLineAmounts {
+  unitPrice: number
+  qty: number
+  discountAmount: number
+  isExchangeItem: boolean
+}
+
+export interface PricedSaleLine {
+  /** The line's own discount plus its share of the bill-level discount. */
+  discountAmount: number
   vatAmount: number
   lineTotal: number
 }
 
-export function calculateLineTotals(unitPrice: number, qty: number, discountAmount: number): LineTotals {
-  const taxableAmount = round2(unitPrice * qty - discountAmount)
-  const vatAmount = calculateLineVat(taxableAmount)
-  return { taxableAmount, vatAmount, lineTotal: round2(taxableAmount + vatAmount) }
+export interface SaleTotals {
+  lines: PricedSaleLine[]
+  subtotal: number
+  discountAmount: number
+  vatAmount: number
+  total: number
 }
 
-/** The effective discount % an edited unit price represents vs. the product's stored selling price. */
-export function impliedDiscountPct(sellingPrice: number, editedUnitPrice: number): number {
-  if (sellingPrice <= 0) return 0
-  const pct = ((sellingPrice - editedUnitPrice) / sellingPrice) * 100
-  return Math.max(0, round2(pct))
+/**
+ * The bill-level discount is spread across the real (non-exchange) lines pro rata to their
+ * post-line-discount amount, so VAT is only charged on what the customer actually pays. The last
+ * eligible line absorbs the rounding remainder so the shares add up to the bill discount exactly.
+ * Old-gold exchange credit lines carry no VAT and take no share of the bill discount.
+ */
+export function calculateSaleTotals(lines: SaleLineAmounts[], billDiscountAmount: number): SaleTotals {
+  const taxableBeforeBill = lines.map((l) => (l.isExchangeItem ? 0 : round2(l.unitPrice * l.qty - l.discountAmount)))
+  const pool = round2(taxableBeforeBill.reduce((sum, v) => sum + Math.max(v, 0), 0))
+  let lastEligible = -1
+  taxableBeforeBill.forEach((v, i) => {
+    if (v > 0) lastEligible = i
+  })
+
+  let remaining = pool > 0 ? round2(billDiscountAmount) : 0
+  const priced = lines.map((l, i): PricedSaleLine => {
+    let share = 0
+    if (pool > 0 && taxableBeforeBill[i] > 0) {
+      share = i === lastEligible ? remaining : round2((billDiscountAmount * taxableBeforeBill[i]) / pool)
+      remaining = round2(remaining - share)
+    }
+    const discountAmount = round2(l.discountAmount + share)
+    const taxableAmount = round2(l.unitPrice * l.qty - discountAmount)
+    const vatAmount = l.isExchangeItem ? 0 : calculateLineVat(taxableAmount)
+    return { discountAmount, vatAmount, lineTotal: round2(taxableAmount + vatAmount) }
+  })
+
+  return {
+    lines: priced,
+    subtotal: round2(lines.reduce((sum, l) => sum + l.unitPrice * l.qty, 0)),
+    discountAmount: round2(priced.reduce((sum, l) => sum + l.discountAmount, 0)),
+    vatAmount: round2(priced.reduce((sum, l) => sum + l.vatAmount, 0)),
+    total: round2(priced.reduce((sum, l) => sum + l.lineTotal, 0))
+  }
 }

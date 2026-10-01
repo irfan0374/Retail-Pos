@@ -114,7 +114,7 @@ export function listPurchases(filter?: { supplierId?: number }): Purchase[] {
 export function listPurchasesWithItemsInRange(dateFrom: string, dateTo: string): PurchaseWithItems[] {
   const db = getDb()
   const rows = db
-    .prepare('SELECT * FROM purchases WHERE date(date) BETWEEN date(?) AND date(?) ORDER BY id')
+    .prepare("SELECT * FROM purchases WHERE date(date, 'localtime') BETWEEN date(?) AND date(?) ORDER BY id")
     .all(dateFrom, dateTo) as PurchaseRow[]
   return rows.map((row) => {
     const itemRows = db
@@ -202,13 +202,48 @@ export function listPurchaseReturns(filter?: { purchaseId?: number }): PurchaseR
   return rows.map(toPurchaseReturn)
 }
 
+/** Quantities are REAL, so compare at the 0.001 precision the UI allows. */
+const QTY_EPSILON = 0.0005
+
 export function createPurchaseReturn(
   input: NewPurchaseReturnInput,
   createdBy: number
 ): PurchaseReturnWithItems {
   const db = getDb()
   const run = db.transaction((): PurchaseReturnWithItems => {
-    const total = round2(input.items.reduce((sum, item) => sum + item.qty * item.unitCost, 0))
+    // Merge repeated lines in one request so they can't each pass the remaining-qty check.
+    const requested = new Map<number, number>()
+    for (const item of input.items) {
+      requested.set(item.purchaseItemId, (requested.get(item.purchaseItemId) ?? 0) + item.qty)
+    }
+
+    const findItem = db.prepare('SELECT * FROM purchase_items WHERE id = ?')
+    const alreadyReturned = db.prepare(
+      'SELECT COALESCE(SUM(qty), 0) AS qty FROM purchase_return_items WHERE purchase_item_id = ?'
+    )
+
+    // Product and cost always come from the original purchase line — never from the caller.
+    const lines = [...requested].map(([purchaseItemId, qty]) => {
+      const purchaseItem = findItem.get(purchaseItemId) as PurchaseItemRow | undefined
+      if (!purchaseItem || purchaseItem.purchase_id !== input.purchaseId) {
+        throw new Error(`Purchase item ${purchaseItemId} does not belong to purchase ${input.purchaseId}`)
+      }
+      const { qty: returnedQty } = alreadyReturned.get(purchaseItemId) as { qty: number }
+      const remainingQty = purchaseItem.qty - returnedQty
+      if (qty <= 0 || qty > remainingQty + QTY_EPSILON) {
+        throw new Error(
+          `Invalid return quantity for purchase item ${purchaseItemId} — ${round2(Math.max(remainingQty, 0))} left to return`
+        )
+      }
+      return {
+        purchaseItemId,
+        productId: purchaseItem.product_id,
+        qty,
+        unitCost: purchaseItem.unit_cost,
+        lineTotal: round2(qty * purchaseItem.unit_cost)
+      }
+    })
+    const total = round2(lines.reduce((sum, line) => sum + line.lineTotal, 0))
 
     const returnResult = db
       .prepare('INSERT INTO purchase_returns (purchase_id, reason, total, created_by) VALUES (?, ?, ?, ?)')
@@ -219,14 +254,13 @@ export function createPurchaseReturn(
       `INSERT INTO purchase_return_items (purchase_return_id, purchase_item_id, product_id, qty, unit_cost, line_total)
        VALUES (?, ?, ?, ?, ?, ?)`
     )
-    for (const item of input.items) {
-      const lineTotal = round2(item.qty * item.unitCost)
-      insertItem.run(returnId, item.purchaseItemId, item.productId, item.qty, item.unitCost, lineTotal)
-      decrementStock(item.productId, item.qty)
+    for (const line of lines) {
+      insertItem.run(returnId, line.purchaseItemId, line.productId, line.qty, line.unitCost, line.lineTotal)
+      decrementStock(line.productId, line.qty)
       recordStockMovement(
         {
-          productId: item.productId,
-          qtyDelta: -item.qty,
+          productId: line.productId,
+          qtyDelta: -line.qty,
           movementType: 'purchase_return',
           referenceTable: 'purchase_returns',
           referenceId: returnId

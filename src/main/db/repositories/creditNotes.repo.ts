@@ -74,16 +74,41 @@ export function listCreditNotes(filter?: { saleId?: number }): CreditNote[] {
   return rows.map(toCreditNote)
 }
 
+/** Quantities are REAL (weighed items), so compare at the 0.001 precision the UI allows. */
+const QTY_EPSILON = 0.0005
+
 /**
  * Credits back a proportional slice of what was actually charged on each original sale line
  * (never recomputed from current prices/rates) — the same "never mutate history" principle as
  * purchase returns. Increments stock for the returned qty and writes a `sale_return` movement.
+ *
+ * Amounts are computed cumulatively per sale line (everything credited so far, including this
+ * return, minus what earlier credit notes already credited), so a line returned in several parts
+ * credits exactly its original line total with no rounding drift.
  */
 export function createCreditNote(input: NewCreditNoteInput, createdBy: number): CreditNoteWithItems {
   const db = getDb()
   const run = db.transaction((): CreditNoteWithItems => {
+    const sale = db.prepare('SELECT status FROM sales WHERE id = ?').get(input.saleId) as
+      | { status: string }
+      | undefined
+    if (!sale) throw new Error(`Sale ${input.saleId} not found`)
+    if (sale.status === 'void') throw new Error('Cannot return items from a voided sale')
+
+    // Merge repeated sale items in one request so they can't each pass the remaining-qty check.
+    const requested = new Map<number, number>()
+    for (const item of input.items) {
+      requested.set(item.saleItemId, (requested.get(item.saleItemId) ?? 0) + item.qty)
+    }
+
+    const alreadyCredited = db.prepare(
+      `SELECT COALESCE(SUM(qty), 0) AS qty, COALESCE(SUM(vat_amount), 0) AS vat, COALESCE(SUM(line_total), 0) AS total
+       FROM credit_note_items WHERE sale_item_id = ?`
+    )
+
     let subtotal = 0
     let vatTotal = 0
+    let total = 0
     const lines: {
       saleItemId: number
       productId: number
@@ -91,35 +116,41 @@ export function createCreditNote(input: NewCreditNoteInput, createdBy: number): 
       unitPrice: number
       vatAmount: number
       lineTotal: number
-      isExchangeItem: boolean
     }[] = []
 
-    for (const item of input.items) {
-      const saleItem = findSaleItemById(item.saleItemId)
+    for (const [saleItemId, qty] of requested) {
+      const saleItem = findSaleItemById(saleItemId)
       if (!saleItem || saleItem.saleId !== input.saleId) {
-        throw new Error(`Sale item ${item.saleItemId} does not belong to sale ${input.saleId}`)
+        throw new Error(`Sale item ${saleItemId} does not belong to sale ${input.saleId}`)
       }
-      if (item.qty <= 0 || item.qty > saleItem.qty) {
-        throw new Error(`Invalid return quantity for sale item ${item.saleItemId}`)
+      if (saleItem.isExchangeItem) {
+        throw new Error('Old-gold exchange credit lines cannot be returned')
       }
-      const fraction = item.qty / saleItem.qty
-      const vatAmount = round2(saleItem.vatAmount * fraction)
-      const lineTotal = round2(saleItem.lineTotal * fraction)
-      subtotal = round2(subtotal + round2(saleItem.unitPrice * item.qty))
+      const prior = alreadyCredited.get(saleItemId) as { qty: number; vat: number; total: number }
+      const remainingQty = saleItem.qty - prior.qty
+      if (qty <= 0 || qty > remainingQty + QTY_EPSILON) {
+        throw new Error(
+          `Invalid return quantity for "${saleItem.description}" — ${round2(Math.max(remainingQty, 0))} left to return`
+        )
+      }
+
+      const cumulativeFraction = Math.min((prior.qty + qty) / saleItem.qty, 1)
+      const vatAmount = round2(round2(saleItem.vatAmount * cumulativeFraction) - prior.vat)
+      const lineTotal = round2(round2(saleItem.lineTotal * cumulativeFraction) - prior.total)
+      subtotal = round2(subtotal + lineTotal - vatAmount)
       vatTotal = round2(vatTotal + vatAmount)
+      total = round2(total + lineTotal)
       lines.push({
-        saleItemId: item.saleItemId,
+        saleItemId,
         productId: saleItem.productId,
-        qty: item.qty,
+        qty,
         unitPrice: saleItem.unitPrice,
         vatAmount,
-        lineTotal,
-        isExchangeItem: saleItem.isExchangeItem
+        lineTotal
       })
     }
 
     const creditNoteNo = nextCreditNoteNo(db)
-    const total = round2(subtotal + vatTotal)
     const result = db
       .prepare(
         `INSERT INTO credit_notes (credit_note_no, sale_id, reason, subtotal, vat_amount, total, created_by)
@@ -134,19 +165,17 @@ export function createCreditNote(input: NewCreditNoteInput, createdBy: number): 
     )
     for (const line of lines) {
       insertItem.run(creditNoteId, line.saleItemId, line.productId, line.qty, line.unitPrice, line.vatAmount, line.lineTotal)
-      if (!line.isExchangeItem) {
-        incrementStock(line.productId, line.qty)
-        recordStockMovement(
-          {
-            productId: line.productId,
-            qtyDelta: line.qty,
-            movementType: 'sale_return',
-            referenceTable: 'credit_notes',
-            referenceId: creditNoteId
-          },
-          db
-        )
-      }
+      incrementStock(line.productId, line.qty)
+      recordStockMovement(
+        {
+          productId: line.productId,
+          qtyDelta: line.qty,
+          movementType: 'sale_return',
+          referenceTable: 'credit_notes',
+          referenceId: creditNoteId
+        },
+        db
+      )
     }
 
     recordAuditLog(

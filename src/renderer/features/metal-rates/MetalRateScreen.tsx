@@ -1,13 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { formatAed } from '../../lib/format'
+import { formatAed, localDateIso } from '../../lib/format'
 import type { MetalRate, MetalType } from '@shared/types/product'
 
 const METAL_TYPES: MetalType[] = ['gold', 'silver', 'platinum', 'imitation']
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 export function MetalRateScreen() {
   const { t } = useTranslation()
@@ -32,7 +28,7 @@ export function MetalRateScreen() {
     setError(null)
     try {
       await window.api.metalRates.upsert({
-        date: today(),
+        date: localDateIso(),
         metalType,
         purity,
         ratePerGram: Number(ratePerGram)

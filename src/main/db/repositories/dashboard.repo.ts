@@ -3,20 +3,29 @@ import { round2 } from '@shared/pricing'
 import { EXCHANGE_PLACEHOLDER_SKU } from '@shared/constants'
 import type { DashboardSummary, SlowMovingProduct, TopSellingProduct } from '@shared/types/report'
 
+/** `created_at` is UTC; "this month" means the shop's local calendar month. */
+const THIS_MONTH = (column: string): string =>
+  `strftime('%Y-%m', ${column}, 'localtime') = strftime('%Y-%m', 'now', 'localtime')`
+
 export function getDashboardSummary(): DashboardSummary {
   const db = getDb()
 
   const { revenueToday } = db
     .prepare(
-      `SELECT COALESCE(SUM(total), 0) AS revenueToday FROM sales
-       WHERE status != 'void' AND date(created_at) = date('now')`
+      `SELECT
+         (SELECT COALESCE(SUM(total), 0) FROM sales
+          WHERE status != 'void' AND date(created_at, 'localtime') = date('now', 'localtime'))
+         - (SELECT COALESCE(SUM(total), 0) FROM credit_notes
+            WHERE date(created_at, 'localtime') = date('now', 'localtime')) AS revenueToday`
     )
     .get() as { revenueToday: number }
 
   const { revenueThisMonth } = db
     .prepare(
-      `SELECT COALESCE(SUM(total), 0) AS revenueThisMonth FROM sales
-       WHERE status != 'void' AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+      `SELECT
+         (SELECT COALESCE(SUM(total), 0) FROM sales
+          WHERE status != 'void' AND ${THIS_MONTH('created_at')})
+         - (SELECT COALESCE(SUM(total), 0) FROM credit_notes WHERE ${THIS_MONTH('created_at')}) AS revenueThisMonth`
     )
     .get() as { revenueThisMonth: number }
 
@@ -31,7 +40,7 @@ export function getDashboardSummary(): DashboardSummary {
        INNER JOIN sales s ON s.id = si.sale_id
        INNER JOIN products p ON p.id = si.product_id
        WHERE s.status != 'void' AND si.is_exchange_item = 0
-         AND strftime('%Y-%m', s.created_at) = strftime('%Y-%m', 'now')`
+         AND ${THIS_MONTH('s.created_at')}`
     )
     .get() as { lineRevenue: number; lineCost: number }
 
@@ -56,7 +65,7 @@ export function getTopSellingProducts(limit = 10): TopSellingProduct[] {
        INNER JOIN sales s ON s.id = si.sale_id
        INNER JOIN products p ON p.id = si.product_id
        WHERE s.status != 'void' AND si.is_exchange_item = 0
-         AND strftime('%Y-%m', s.created_at) = strftime('%Y-%m', 'now')
+         AND ${THIS_MONTH('s.created_at')}
        GROUP BY p.id
        ORDER BY qtySold DESC
        LIMIT ?`

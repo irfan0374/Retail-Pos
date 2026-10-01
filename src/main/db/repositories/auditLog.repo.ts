@@ -48,11 +48,11 @@ export function listAuditLog(filter: AuditLogFilter): AuditLogEntry[] {
   const params: unknown[] = []
 
   if (filter.dateFrom) {
-    clauses.push('date(timestamp) >= date(?)')
+    clauses.push("date(timestamp, 'localtime') >= date(?)")
     params.push(filter.dateFrom)
   }
   if (filter.dateTo) {
-    clauses.push('date(timestamp) <= date(?)')
+    clauses.push("date(timestamp, 'localtime') <= date(?)")
     params.push(filter.dateTo)
   }
   if (filter.userId) {

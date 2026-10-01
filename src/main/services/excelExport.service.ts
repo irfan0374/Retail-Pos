@@ -96,9 +96,12 @@ export async function exportVatReport(summary: VatSummary, settings: ShopSetting
   sheet.addRow(['VAT Return Period', `${summary.dateFrom} to ${summary.dateTo}`])
   sheet.addRow([])
   sheet.addRow(['Number of Sales', summary.salesCount])
-  const taxableRow = sheet.addRow(['Standard Rated Supplies — Taxable Amount (AED)', summary.taxableAmount])
+  sheet.addRow(['Number of Credit Notes', summary.creditNoteCount])
+  const creditRow = sheet.addRow(['Credit Notes Issued — Including VAT (AED)', summary.creditNoteTotal])
+  const taxableRow = sheet.addRow(['Standard Rated Supplies — Net Taxable Amount (AED)', summary.taxableAmount])
   const vatRow = sheet.addRow(['Output VAT Due (5%) (AED)', summary.vatAmount])
   const totalRow = sheet.addRow(['Total Amount Including VAT (AED)', summary.totalAmount])
+  creditRow.getCell('value').numFmt = CURRENCY_FMT
   taxableRow.getCell('value').numFmt = CURRENCY_FMT
   vatRow.getCell('value').numFmt = CURRENCY_FMT
   totalRow.getCell('value').numFmt = CURRENCY_FMT

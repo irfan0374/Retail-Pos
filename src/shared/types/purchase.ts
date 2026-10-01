@@ -34,11 +34,10 @@ export interface PurchaseWithItems extends Purchase {
   items: PurchaseItem[]
 }
 
+/** Product and unit cost are taken from the original purchase line server-side. */
 export interface PurchaseReturnLineInput {
   purchaseItemId: number
-  productId: number
   qty: number
-  unitCost: number
 }
 
 export interface NewPurchaseReturnInput {

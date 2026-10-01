@@ -1,16 +1,12 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { round2 } from '@shared/pricing'
-import { formatAed } from '../../lib/format'
+import { formatAed, localDateIso } from '../../lib/format'
 import type { ZReport } from '@shared/types/report'
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 export function ZReportScreen() {
   const { t } = useTranslation()
-  const [date, setDate] = useState(today())
+  const [date, setDate] = useState(localDateIso())
   const [report, setReport] = useState<ZReport | null>(null)
   const [actualCash, setActualCash] = useState('')
   const [loading, setLoading] = useState(false)
@@ -78,6 +74,12 @@ export function ZReportScreen() {
           </div>
 
           <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-sm">
+            <div className="flex justify-between">
+              <span>
+                {t('reports.refunds')} ({report.refundCount})
+              </span>
+              <span>-{formatAed(report.refundTotal)}</span>
+            </div>
             <div className="flex justify-between">
               <span>{t('reports.expectedCash')}</span>
               <span className="font-medium">{formatAed(report.expectedCash)}</span>

@@ -133,7 +133,13 @@ export function CheckoutScreen() {
             <PauseCircle className="h-4 w-4" />
             {t('checkout.holdSale')}
           </button>
-          <button onClick={() => setResuming(true)} className="btn-secondary flex items-center gap-1.5 text-sm">
+          <button
+            onClick={() => setResuming(true)}
+            // Resuming replaces the cart, so the current sale must be held or finished first.
+            disabled={lines.length > 0}
+            title={lines.length > 0 ? t('checkout.resumeNeedsEmptyCart') : undefined}
+            className="btn-secondary flex items-center gap-1.5 text-sm"
+          >
             <PlayCircle className="h-4 w-4" />
             {t('checkout.resumeSale')}
           </button>

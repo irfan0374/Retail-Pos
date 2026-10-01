@@ -102,6 +102,7 @@
     "holdSale": "تعليق البيع",
     "holdNote": "ملاحظة (اختياري)",
     "resumeSale": "استئناف البيع",
+    "resumeNeedsEmptyCart": "علّق البيع الحالي أو أكمله قبل استئناف بيع آخر",
     "noHeldSales": "لا توجد عمليات بيع معلّقة",
     "oldGoldExchange": "استبدال الذهب القديم",
     "exchangeCredit": "رصيد الاستبدال",
@@ -202,6 +203,8 @@
     "byPaymentMethod": "حسب طريقة الدفع",
     "expectedCash": "النقد المتوقع",
     "actualCash": "النقد الفعلي المعدود",
+    "creditNotes": "إشعارات دائنة",
+    "refunds": "المبالغ المستردة",
     "variance": "الفرق"
   },
   "settings": {

@@ -103,6 +103,7 @@
     "holdNote": "Note (optional)",
     "resumeSale": "Resume Sale",
     "noHeldSales": "No held sales",
+    "resumeNeedsEmptyCart": "Hold or finish the current sale before resuming another",
     "oldGoldExchange": "Old Gold Exchange",
     "exchangeCredit": "Exchange Credit",
     "metalDescription": "Metal Description",
@@ -202,7 +203,9 @@
     "byPaymentMethod": "By Payment Method",
     "expectedCash": "Expected Cash",
     "actualCash": "Actual Cash Counted",
-    "variance": "Variance"
+    "variance": "Variance",
+    "creditNotes": "Credit Notes",
+    "refunds": "Refunds"
   },
   "settings": {
     "title": "Shop Settings",

@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
+import { localDateIso } from '../../lib/format'
 
 export function PurchaseRegisterExportScreen() {
   const { t } = useTranslation()
-  const [dateFrom, setDateFrom] = useState(today())
-  const [dateTo, setDateTo] = useState(today())
+  const [dateFrom, setDateFrom] = useState(localDateIso())
+  const [dateTo, setDateTo] = useState(localDateIso())
   const [message, setMessage] = useState<string | null>(null)
 
   async function handleExport() {

@@ -1,17 +1,13 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download } from 'lucide-react'
-import { formatAed } from '../../lib/format'
+import { formatAed, localDateIso } from '../../lib/format'
 import type { VatSummary } from '@shared/types/report'
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 export function VatReportScreen() {
   const { t } = useTranslation()
-  const [dateFrom, setDateFrom] = useState(today())
-  const [dateTo, setDateTo] = useState(today())
+  const [dateFrom, setDateFrom] = useState(localDateIso())
+  const [dateTo, setDateTo] = useState(localDateIso())
   const [summary, setSummary] = useState<VatSummary | null>(null)
   const [exportMessage, setExportMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -62,6 +58,12 @@ export function VatReportScreen() {
           <div className="flex justify-between">
             <span>{t('reports.salesCount')}</span>
             <span>{summary.salesCount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>
+              {t('reports.creditNotes')} ({summary.creditNoteCount})
+            </span>
+            <span>-{formatAed(summary.creditNoteTotal)}</span>
           </div>
           <div className="flex justify-between">
             <span>{t('reports.taxableAmount')}</span>

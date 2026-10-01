@@ -26,12 +26,7 @@ export function PurchaseReturnModal({
     e.preventDefault()
     const items = purchase.items
       .filter((item) => (returnQty[item.id] ?? 0) > 0)
-      .map((item) => ({
-        purchaseItemId: item.id,
-        productId: item.productId,
-        qty: returnQty[item.id],
-        unitCost: item.unitCost
-      }))
+      .map((item) => ({ purchaseItemId: item.id, qty: returnQty[item.id] }))
     if (items.length === 0) return
 
     setSaving(true)
