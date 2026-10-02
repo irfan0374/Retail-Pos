@@ -5,6 +5,8 @@
   "auth": {
     "logout": "Logout",
     "loginError": "Incorrect PIN",
+    "pinLockedOut": "Too many incorrect PINs — try again in {{seconds}} seconds",
+    "pinConflict": "This PIN is assigned to more than one user — ask an admin to reset it",
     "enterPin": "Enter your PIN",
     "currentPin": "Current PIN",
     "newPin": "New PIN",
@@ -99,6 +101,7 @@
     "managerPin": "Manager PIN",
     "approve": "Approve",
     "receipt": "Receipt",
+    "printFailed": "Sale {{invoiceNo}} was saved, but the receipt didn't print — ask a manager to reprint it from Sales History",
     "holdSale": "Hold Sale",
     "holdNote": "Note (optional)",
     "resumeSale": "Resume Sale",

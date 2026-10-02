@@ -56,3 +56,8 @@ export interface Sale {
 export interface SaleWithItems extends Sale {
   items: SaleItem[]
 }
+
+/** The sale is committed even when printing fails — `printError` tells the cashier to reprint. */
+export interface FinalizedSale extends SaleWithItems {
+  printError?: string
+}

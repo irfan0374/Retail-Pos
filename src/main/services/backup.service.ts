@@ -1,7 +1,7 @@
 import { BrowserWindow, dialog, type OpenDialogOptions } from 'electron'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
-import { getDb, getDbPath } from '../db'
+import { getDb } from '../db'
 import { getBackupSettings, recordBackupCompleted, setBackupDir } from '../db/repositories/settings.repo'
 import type { BackupFileInfo, BackupSettings } from '@shared/types/settings'
 
@@ -33,11 +33,10 @@ export async function performBackup(): Promise<BackupSettings> {
   const settings = getBackupSettings()
   if (!settings.backupDir) throw new Error('No backup folder configured')
 
-  // Flush the WAL into the main file so a plain file copy is a complete, consistent snapshot.
-  getDb().pragma('wal_checkpoint(TRUNCATE)')
-
+  // SQLite's online backup API produces a consistent snapshot even if a sale is written mid-backup,
+  // unlike a raw file copy of the live database.
   const destination = join(settings.backupDir, backupFileName())
-  await fs.copyFile(getDbPath(), destination)
+  await getDb().backup(destination)
   recordBackupCompleted()
   return getBackupSettings()
 }

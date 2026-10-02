@@ -14,6 +14,7 @@ import { HoldSaleModal } from './HoldSaleModal'
 import { ResumeSaleModal } from './ResumeSaleModal'
 import { OldGoldExchangeModal } from './OldGoldExchangeModal'
 import { useSettingsStore } from '../../store/settingsStore'
+import { ipcErrorMessage } from '../../lib/errors'
 import type { MetalRate, Product } from '@shared/types/product'
 import type { ManagerOverride, PaymentMethod, SaleWithItems } from '@shared/types/sale'
 import type { HeldSaleWithItems } from '@shared/types/heldSale'
@@ -71,6 +72,7 @@ export function CheckoutScreen() {
       setReceipt(sale)
       setNeedsOverride(false)
       clearCart()
+      if (sale.printError) setError(t('checkout.printFailed', { invoiceNo: sale.invoiceNo }))
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       if (message.includes(MANAGER_OVERRIDE_ERROR)) {
@@ -84,20 +86,27 @@ export function CheckoutScreen() {
   }
 
   async function handleHold(note: string | null) {
-    await window.api.heldSales.create({
-      note,
-      billDiscountAmount,
-      items: lines.map((l) => ({
-        productId: l.product.id,
-        description: l.description ?? l.product.name,
-        qty: l.qty,
-        unitPrice: l.unitPrice,
-        discountAmount: l.discountAmount,
-        isExchangeItem: l.isExchangeItem
-      }))
-    })
-    clearCart()
-    setHolding(false)
+    setError(null)
+    try {
+      await window.api.heldSales.create({
+        note,
+        billDiscountAmount,
+        items: lines.map((l) => ({
+          productId: l.product.id,
+          description: l.description ?? l.product.name,
+          qty: l.qty,
+          unitPrice: l.unitPrice,
+          discountAmount: l.discountAmount,
+          isExchangeItem: l.isExchangeItem
+        }))
+      })
+      clearCart()
+    } catch (err) {
+      // The cart is kept, so nothing is lost — just tell the cashier why it didn't hold.
+      setError(ipcErrorMessage(err))
+    } finally {
+      setHolding(false)
+    }
   }
 
   function handleResume(heldSale: HeldSaleWithItems) {

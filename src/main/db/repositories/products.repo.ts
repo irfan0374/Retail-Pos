@@ -86,8 +86,9 @@ export function searchProducts(query: string): Product[] {
   return rows.map(toProduct)
 }
 
+/** Checkout scanning only — deactivated products (and the exchange placeholder) are not sellable. */
 export function findProductByBarcode(barcode: string): Product | null {
-  const row = getDb().prepare('SELECT * FROM products WHERE barcode = ?').get(barcode) as
+  const row = getDb().prepare('SELECT * FROM products WHERE barcode = ? AND is_active = 1').get(barcode) as
     | ProductRow
     | undefined
   return row ? toProduct(row) : null

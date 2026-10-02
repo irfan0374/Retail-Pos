@@ -1,7 +1,7 @@
 import type { SafeUser } from './user'
 import type { Category, MetalRate, NewProductInput, Product, UpdateProductInput } from './product'
 import type { Customer, NewCustomerInput } from './customer'
-import type { FinalizeSaleInput, Sale, SaleWithItems } from './sale'
+import type { FinalizedSale, FinalizeSaleInput, Sale, SaleWithItems } from './sale'
 import type {
   NewSupplierInput,
   NewSupplierPaymentInput,
@@ -180,7 +180,7 @@ export interface IpcApi {
     create(input: NewCustomerInput): Promise<Customer>
   }
   sales: {
-    finalize(input: FinalizeSaleInput): Promise<SaleWithItems>
+    finalize(input: FinalizeSaleInput): Promise<FinalizedSale>
     findByInvoice(invoiceNo: string): Promise<SaleWithItems | null>
     reprint(saleId: number): Promise<void>
   }

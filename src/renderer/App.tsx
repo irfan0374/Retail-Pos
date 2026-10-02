@@ -26,6 +26,12 @@ export default function App() {
     if (user) void loadSettings()
   }, [user, loadSettings])
 
+  // Every login starts at checkout — the previous user's screen may be one this user can't access.
+  const userId = user?.id ?? null
+  useEffect(() => {
+    setScreen('checkout')
+  }, [userId])
+
   if (status === 'loading') return null
   if (!user) return <LoginScreen />
 

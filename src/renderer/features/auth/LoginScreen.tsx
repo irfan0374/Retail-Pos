@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import { getLanguage, setLanguage, type AppLanguage } from '../../i18n'
 import { PinPad } from '../../components/PinPad'
+import { ipcErrorMessage } from '../../lib/errors'
 
 export function LoginScreen() {
   const { t } = useTranslation()
@@ -23,8 +24,12 @@ export function LoginScreen() {
     setError(null)
     try {
       await login(pin)
-    } catch {
-      setError(t('auth.loginError'))
+    } catch (err) {
+      const message = ipcErrorMessage(err)
+      const lockout = /try again in (\d+) seconds/.exec(message)
+      if (lockout) setError(t('auth.pinLockedOut', { seconds: lockout[1] }))
+      else if (message.includes('more than one user')) setError(t('auth.pinConflict'))
+      else setError(t('auth.loginError'))
       setAttempt((a) => a + 1)
     } finally {
       setSubmitting(false)

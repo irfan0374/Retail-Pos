@@ -29,12 +29,13 @@ export function getDashboardSummary(): DashboardSummary {
     )
     .get() as { revenueThisMonth: number }
 
+  // Revenue is net of line and bill discounts, excluding VAT.
   // Margin uses each line's product's *current* cost price — sale_items doesn't snapshot cost,
   // so this is an approximation, not the exact margin at the time of sale.
   const { lineRevenue, lineCost } = db
     .prepare(
       `SELECT
-         COALESCE(SUM(si.qty * si.unit_price), 0) AS lineRevenue,
+         COALESCE(SUM(si.line_total - si.vat_amount), 0) AS lineRevenue,
          COALESCE(SUM(si.qty * p.cost_price), 0) AS lineCost
        FROM sale_items si
        INNER JOIN sales s ON s.id = si.sale_id

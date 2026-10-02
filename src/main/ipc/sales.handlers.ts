@@ -16,7 +16,7 @@ import { recordAuditLog } from '../db/repositories/auditLog.repo'
 import { getSettings } from '../db/repositories/settings.repo'
 import { getPrinter } from '../services/printer.service'
 import type { SafeUser } from '@shared/types/user'
-import type { FinalizeSaleInput, SaleWithItems } from '@shared/types/sale'
+import type { FinalizedSale, FinalizeSaleInput } from '@shared/types/sale'
 
 const finalizeSchema = z.object({
   customerId: z.number().nullable(),
@@ -51,7 +51,7 @@ function exceedsCashierLimit(referenceAmount: number, chargedAmount: number): bo
 export async function finalizeSaleWithChecks(
   cashier: SafeUser,
   input: FinalizeSaleInput
-): Promise<SaleWithItems> {
+): Promise<FinalizedSale> {
   const overrideReasons = new Set<'discount' | 'payout'>()
   let totalReference = 0
   let totalChargedBeforeBill = 0
@@ -69,6 +69,8 @@ export async function finalizeSaleWithChecks(
       if (item.discountAmount !== 0) throw new Error('Exchange lines cannot carry a discount')
     } else {
       if (isPlaceholder) throw new Error('The old-gold exchange product cannot be sold as a normal line')
+      // The placeholder is inactive by design, so this check only applies to real lines.
+      if (!product.isActive) throw new Error(`${product.name} has been removed from the catalog`)
       if (item.unitPrice < 0) throw new Error(`Negative price on ${product.name}`)
 
       const gross = item.unitPrice * item.qty
@@ -145,9 +147,24 @@ export async function finalizeSaleWithChecks(
     items: lines
   })
 
-  const printer = getPrinter()
-  await printer.printReceipt(sale)
-  if (input.paymentMethod === 'cash') await printer.openDrawer()
+  // The sale is already committed. A hardware failure here must not surface as a failed sale,
+  // or the cashier retries and books it twice — report it so they can reprint instead.
+  try {
+    const printer = getPrinter()
+    await printer.printReceipt(sale)
+    if (input.paymentMethod === 'cash') await printer.openDrawer()
+  } catch (err) {
+    const printError = err instanceof Error ? err.message : String(err)
+    console.error('[printer] receipt/drawer failed for', sale.invoiceNo, err)
+    recordAuditLog({
+      userId: cashier.id,
+      action: 'sales.print_failed',
+      tableName: 'sales',
+      recordId: sale.id,
+      details: { invoiceNo: sale.invoiceNo, error: printError }
+    })
+    return { ...sale, printError }
+  }
 
   return sale
 }

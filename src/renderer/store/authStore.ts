@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { SafeUser } from '@shared/types/user'
+import { useCartStore } from './cartStore'
 
 interface AuthState {
   user: SafeUser | null
@@ -25,6 +26,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: async () => {
     await window.api.auth.logout()
+    // The cart lives outside the checkout screen, so it would otherwise carry over to whoever logs in next.
+    useCartStore.getState().clear()
     set({ user: null })
   }
 }))
